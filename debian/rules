@@ -11,7 +11,11 @@
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-CXXFLAGS = -Wall -g
+CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
+CFLAGS   := $(shell dpkg-buildflags --get CFLAGS)
+CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+LDFLAGS  := $(shell dpkg-buildflags --get LDFLAGS)
+
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CXXFLAGS += -O0
 else
@@ -34,11 +38,17 @@ cfgcommon = \
     --enable-wtmp \
     --enable-lastlog
 
+flagscommon = \
+    CPPFLAGS="$(CPPFLAGS)" \
+    CFLAGS="$(CFLAGS)" \
+    CXXFLAGS="$(CXXFLAGS)" \
+    LDFLAGS="$(LDFLAGS)"
+
 config.status: configure
 	dh_autotools-dev_updateconfig
 
 conf-unicode:
-	CXXFLAGS="$(CXXFLAGS)" ./configure $(cfgcommon) \
+	$(flagscommon) ./configure $(cfgcommon) \
 	    --enable-unicode3 \
 	    --enable-combining \
 	    --enable-xft \
@@ -59,7 +69,7 @@ conf-unicode:
 	    --with-term=rxvt-unicode
 
 conf-unicode-256color:
-	CXXFLAGS="$(CXXFLAGS)" ./configure $(cfgcommon) \
+	$(flagscommon) ./configure $(cfgcommon) \
 	    --enable-unicode3 \
 	    --enable-combining \
 	    --enable-xft \
@@ -81,7 +91,7 @@ conf-unicode-256color:
 	    --with-term=rxvt-unicode-256color
 
 conf-unicode-lite:
-	CXXFLAGS="$(CXXFLAGS)" ./configure $(cfgcommon) \
+	$(flagscommon) ./configure $(cfgcommon) \
 	    --disable-xft \
 	    --disable-pixbuf\
 	    --disable-perl \
