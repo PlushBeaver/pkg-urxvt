@@ -1,0 +1,22 @@
+Description: Document Ctrl-Left/Right in tabbed extension
+Author: Ryan Kavanagh <rak@debian.org>
+Origin: vendor
+Bug-Debian: https://bugs.debian.org/684880
+Reviewed-by: Ryan Kavanagh <rak@debian.org>
+Last-Update: 2012-08-14
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: pkg-urxvt/doc/rxvtperl.3.man.in
+===================================================================
+--- pkg-urxvt.orig/doc/rxvtperl.3.man.in	2012-01-30 06:34:16.684589004 -0500
++++ pkg-urxvt/doc/rxvtperl.3.man.in	2012-08-14 09:13:31.686403157 -0400
+@@ -374,7 +374,8 @@
+ .Sp
+ Clicking a button will activate that tab. Pressing \fBShift-Left\fR and
+ \&\fBShift-Right\fR will switch to the tab left or right of the current one,
+-while \fBShift-Down\fR creates a new tab.
++while \fBShift-Down\fR creates a new tab. Pressing \fBCtrl-Left\fR and
++\&\fBCtrl-Right\fR will renumber a tab by moving it to the left or to the right.
+ .Sp
+ The tabbar itself can be configured similarly to a normal terminal, but
+ with a resource class of \f(CW\*(C`URxvt.tabbed\*(C'\fR. In addition, it supports the
