@@ -7,8 +7,8 @@ Last-Update: 2011-03-06
 
 Index: pkg-urxvt/doc/rxvt.7.pod
 ===================================================================
---- pkg-urxvt.orig/doc/rxvt.7.pod	2012-01-26 07:51:19.498672082 -0500
-+++ pkg-urxvt/doc/rxvt.7.pod	2012-01-26 07:52:29.551019450 -0500
+--- pkg-urxvt.orig/doc/rxvt.7.pod	2013-02-12 12:15:15.007702780 -0500
++++ pkg-urxvt/doc/rxvt.7.pod	2013-02-12 12:15:15.003702685 -0500
 @@ -546,12 +546,9 @@
  
  =head3 My numerical keypad acts weird and generates differing output?

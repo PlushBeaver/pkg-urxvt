@@ -11,8 +11,8 @@ Reviewed-By: Ryan Kavanagh <ryanakca@kubuntu.org>
 Last-Update: 2011-02-24
 Index: pkg-urxvt/src/rxvtfont.C
 ===================================================================
---- pkg-urxvt.orig/src/rxvtfont.C	2011-07-19 14:40:16.136549809 -0400
-+++ pkg-urxvt/src/rxvtfont.C	2011-07-19 14:40:19.120564605 -0400
+--- pkg-urxvt.orig/src/rxvtfont.C	2013-02-12 12:15:11.571620415 -0500
++++ pkg-urxvt/src/rxvtfont.C	2013-02-12 12:15:11.567620319 -0500
 @@ -136,7 +136,7 @@
  
    //{ CS_UNICODE,      "-*-unifont-*-*-*-*-*-*-*-*-c-*-iso10646-1"   }, // this gem of a font has actual dotted circles within the combining character glyphs.
