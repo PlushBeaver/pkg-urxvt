@@ -168,6 +168,8 @@ clean:
 	rm -f doc/*.txt.in
 	rm -f doc/README.*.in
 	rm -f doc/pod2*.tmp
+	rm -f doc/rxvt.7.tbl
+	rm -f mantmp
 	rm -fr tmp
 
 	dh_clean build-stamp
