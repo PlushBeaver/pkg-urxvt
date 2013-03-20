@@ -1,0 +1,26 @@
+Description: Fix POD errors in urxvt manpage
+Author: Ryan Kavanagh <rak@debian.org>
+Origin: vendor
+Forwarded: no
+Applied-Upstream: no
+Reviewed-by: Ryan Kavanagh <rak@debian.org>
+Last-Update: 2013-03-20
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: pkg-urxvt/doc/rxvt.1.pod
+===================================================================
+--- pkg-urxvt.orig/doc/rxvt.1.pod	2013-03-20 15:07:13.990297680 -0400
++++ pkg-urxvt/doc/rxvt.1.pod	2013-03-20 17:42:10.437333768 -0400
+@@ -1207,8 +1207,12 @@
+ 
+ Turn on/off ISO 14755 5.2 mode (default enabled).
+ 
++=back
++
+ =head1 BACKGROUND IMAGE OPTIONS AND RESOURCES
+ 
++=over 4
++
+ =item B<-pixmap> I<file[;oplist]>
+ 
+ =item B<backgroundPixmap:> I<file[;oplist]>
