@@ -1,8 +1,23 @@
-rxvt-unicode (9.17-1) UNRELEASED; urgency=low
+rxvt-unicode (9.17-1) experimental; urgency=low
 
-  * Imported Upstream version 9.17.
+  * Imported Upstream version 9.17
+    + Document Ctrl-Left/Right in tabbed extension (Closes: #684880)
+    + Update copyright years
+    + Refreshed patches
+  * Take over maintainership of rxvt-unicode, team is long dead
+  * Bump standards to 3.9.4
+  * Re-enable -Wall, (Closes: #679796)
+  * Cleanup more files upstream misses
+  * Ignore certain auto-regenerated files in diff, see debian/source/options
+  * Undo changes to auto-generated files in clean target, as mandated by
+    policy
+  * Set urxvtperl(3)'s .TH to 3 since we're installing in section 3,
+    13_section_mismatch.diff
+  * Update 11_fix_lexgrog.diff to deal with broken NAME in selection-popup
+    manpage
+  * Fix POD errors in urxvt manpage, 14_pod_errors.diff
 
- -- Ryan Kavanagh <rak@debian.org>  Wed, 20 Mar 2013 15:01:56 -0400
+ -- Ryan Kavanagh <rak@debian.org>  Thu, 21 Mar 2013 09:28:31 -0400
 
 rxvt-unicode (9.15-2) unstable; urgency=low
 
