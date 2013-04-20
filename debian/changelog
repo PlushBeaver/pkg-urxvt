@@ -1,3 +1,10 @@
+rxvt-unicode (9.18-1) experimental; urgency=low
+
+  * Imported Upstream version 9.18
+  * Added menu file for rxvt-unicode-256color (Closes: #690226)
+
+ -- Ryan Kavanagh <rak@debian.org>  Sat, 20 Apr 2013 17:55:45 -0400
+
 rxvt-unicode (9.17-1) experimental; urgency=low
 
   * Imported Upstream version 9.17
