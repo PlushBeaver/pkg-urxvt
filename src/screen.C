@@ -256,9 +256,6 @@ rxvt_term::scr_reset ()
 
   if (!prev_row_buf)
     {
-      /*
-       * first time called (or after scr_release) so just malloc everything: don't rely on realloc
-       */
       top_row    = 0;
       term_start = 0;
 
@@ -293,9 +290,14 @@ rxvt_term::scr_reset ()
        * add or delete rows as appropriate
        */
 
+      int common_col = min (prev_ncol, ncol);
+
       for (int row = min (nrow, prev_nrow); row--; )
         {
-          copy_line (drawn_buf [row], prev_drawn_buf [row]);
+          scr_blank_screen_mem (drawn_buf [row], DEFAULT_RSTYLE);
+          memcpy (drawn_buf [row].t, prev_drawn_buf [row].t, sizeof (text_t) * common_col);
+          memcpy (drawn_buf [row].r, prev_drawn_buf [row].r, sizeof (rend_t) * common_col);
+
           copy_line (swap_buf [row], prev_swap_buf [row]);
         }
 
