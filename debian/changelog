@@ -1,3 +1,11 @@
+rxvt-unicode (9.18-2) unstable; urgency=low
+
+  * Upload to unstable now that wheezy has been released
+  * Merge in patch from gregor herrman fixing a FTBFS due to POD errors
+    (Closes: #708026)
+
+ -- Ryan Kavanagh <rak@debian.org>  Sun, 26 May 2013 18:12:22 -0400
+
 rxvt-unicode (9.18-1) experimental; urgency=low
 
   * Imported Upstream version 9.18
