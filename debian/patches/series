@@ -6,3 +6,4 @@
 12_hyphen_minus_sign.diff
 13_section_mismatch.diff
 14_pod_errors.diff
+15_perl_518.diff
