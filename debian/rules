@@ -25,6 +25,24 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
+# Backup files that get overwriten so that the clean target can restore
+# them.
+BACKUP_FILES = \
+    README.FAQ \
+    README.configure \
+    doc/rxvt.1.man.in \
+    doc/rxvt.1.pod \
+    doc/rxvt.7.man.in \
+    doc/rxvt.7.pod \
+    doc/rxvt.1.man.in \
+    doc/rxvtc.1.pod \
+    src/Makefile.in \
+    src/perl/selection-popup \
+    src/perl/tabbed \
+    src/rxvtfont.C \
+    src/rxvttoolkit.C
+BACKED_UP_FILES = $(BACKUP_FILES:%=%.debian-backup)
+
 cfgcommon = \
     --host=$(DEB_HOST_GNU_TYPE) \
     --build=$(DEB_BUILD_GNU_TYPE) \
@@ -45,7 +63,7 @@ flagscommon = \
     CXXFLAGS="$(CXXFLAGS)" \
     LDFLAGS="$(LDFLAGS)"
 
-config.status: configure
+config.status: | $(BACKUP_FILES) configure
 	dh_autotools-dev_updateconfig
 
 conf-unicode:
@@ -106,14 +124,6 @@ build-indep: build-stamp
 build-stamp: config.status
 	dh_testdir
 
-	# Backup files that get overwriten so that the clean target can restore
-	# them.
-	[ -d debian-backup ] || mkdir -p debian-backup/doc
-	for f in doc/rxvt.1.man.in doc/rxvt.7.man.in doc/rxvtc.1.man.in \
-		 README.configure README.FAQ; do \
-	     [ -f debian-backup/$$f ] || cp $$f debian-backup/$$f; \
-	 done
-
 	mkdir -p tmp
 	dh_installdirs -A usr/bin etc/X11/app-defaults usr/share/pixmaps
 
@@ -151,7 +161,7 @@ build-stamp: config.status
 
 	touch build-stamp
 
-clean:
+clean: restore
 	dh_testdir
 	dh_testroot
 
@@ -172,12 +182,6 @@ clean:
 	    rm -f debian/rxvt-$$x.prerm; \
 	    rm -f debian/rxvt-$$x.docs; \
 	done
-
-	# Restore backed up files
-	-mv debian-backup/doc/* doc/
-	-rmdir debian-backup/doc
-	-mv debian-backup/* .
-	-rmdir debian-backup
 
 	rm -f doc/*.txt.in
 	rm -f doc/README.*.in
@@ -260,4 +264,13 @@ copyright:
 	    grep -v 'debian/' | \
 	    sed -e 's/.*: \* //g;s/.*:# //g;s/(c)/(C)/g' | \
 	    sort -k4,3 | uniq
-.PHONY: build clean binary-indep binary-arch binary install copyright
+
+%.debian-backup:
+	@# Move the matching stem, foo, to foo.debian-backup.
+	mv -f $* $@
+
+restore:
+	for file in $(BACKUP_FILES); do \
+            [ ! -f $${file}.debian-backup ] || mv $${file}.debian-backup $${file}; \
+	done
+.PHONY: build clean binary-indep binary-arch binary install copyright restore
