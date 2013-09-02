@@ -5,6 +5,7 @@ rxvt-unicode (9.18-3) unstable; urgency=low
   * Make Vcs-* fields canonical
   * Drop manpage-has-errors-from-man override in rxvt-unicode-256color, no
     longer used
+  * Update clean target to restore sources to pristine condition
 
  -- Ryan Kavanagh <rak@debian.org>  Sun, 01 Sep 2013 08:39:38 -0400
 
