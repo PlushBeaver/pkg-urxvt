@@ -79,6 +79,7 @@ typedef  int32_t tlen_t_; // specifically for use in the line_t structure
 
 #if XRENDER && (HAVE_PIXBUF || ENABLE_TRANSPARENCY)
 # define HAVE_BG_PIXMAP 1
+# define HAVE_IMG 1
 #endif
 
 #if HAVE_BG_PIXMAP
@@ -402,9 +403,9 @@ enum {
 
 /* modes for rxvt_term::scr_page () - scroll page. used by scrollbar window */
 enum page_dirn {
-  UP,
-  DN,
-  NO_DIR,
+  DN     = -1,
+  NO_DIR =  0,
+  UP     =  1,
 };
 
 /* arguments for rxvt_term::scr_change_screen () */
@@ -1145,7 +1146,6 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
 /* ---------- */
 #ifdef SELECTION_SCROLLING
   int             scroll_selection_lines;
-  enum page_dirn  scroll_selection_dir;
   int             selection_save_x,
                   selection_save_y,
                   selection_save_state;
@@ -1402,6 +1402,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   int privcases (int mode, unsigned long bit);
   void process_terminal_mode (int mode, int priv, unsigned int nargs, const int *arg);
   void process_sgr_mode (unsigned int nargs, const int *arg);
+  void set_cursor_style (int style);
   // init.C
   void init (stringvec *argv, stringvec *envv);
   void init (int argc, const char *const *argv, const char *const *envv);
@@ -1536,7 +1537,11 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   void scr_charset_choose (int set) NOTHROW;
   void scr_charset_set (int set, unsigned int ch) NOTHROW;
   void scr_move_to (int y, int len) NOTHROW;
-  bool scr_page (enum page_dirn direction, int nlines) NOTHROW;
+  bool scr_page (int nlines) NOTHROW;
+  bool scr_page (enum page_dirn direction, int nlines) NOTHROW
+  {
+    scr_page (direction * nlines);
+  }
   bool scr_changeview (int new_view_start) NOTHROW;
   void scr_bell () NOTHROW;
   void scr_printscreen (int fullhist) NOTHROW;

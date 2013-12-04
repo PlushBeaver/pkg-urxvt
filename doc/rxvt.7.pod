@@ -1059,8 +1059,6 @@ method servers are running with this command:
 
    xprop -root XIM_SERVERS
 
-=item
-
 =back
 
 =head3 My input method wants <some encoding> but I want UTF-8, what can I do?
@@ -1282,7 +1280,7 @@ Switch to Alternate Character Set
 Shift In (Ctrl-O), invokes the G0 character set (the default).
 Switch to Standard Character Set
 
-=item B<< C<SPC> >>
+=item B<< C<SP> >>
 
 Space Character
 
@@ -1589,33 +1587,33 @@ Character Attributes (SGR)
 
 =begin table
 
-	B<< C<Ps = 0> >>	Normal (default)
-	B<< C<Ps = 1 / 21> >>	On / Off Bold (bright fg)
-	B<< C<Ps = 3 / 23> >>	On / Off Italic
-	B<< C<Ps = 4 / 24> >>	On / Off Underline
-	B<< C<Ps = 5 / 25> >>	On / Off Slow Blink (bright bg)
-	B<< C<Ps = 6 / 26> >>	On / Off Rapid Blink (bright bg)
-	B<< C<Ps = 7 / 27> >>	On / Off Inverse
-	B<< C<Ps = 8 / 27> >>	On / Off Invisible (NYI)
-	B<< C<Ps = 30 / 40> >>	fg/bg Black
-	B<< C<Ps = 31 / 41> >>	fg/bg Red
-	B<< C<Ps = 32 / 42> >>	fg/bg Green
-	B<< C<Ps = 33 / 43> >>	fg/bg Yellow
-	B<< C<Ps = 34 / 44> >>	fg/bg Blue
-	B<< C<Ps = 35 / 45> >>	fg/bg Magenta
-	B<< C<Ps = 36 / 46> >>	fg/bg Cyan
-	B<< C<Ps = 38;5 / 48;5> >>	set fg/bg to colour #m (ISO 8613-6)
-	B<< C<Ps = 37 / 47> >>	fg/bg White
-	B<< C<Ps = 39 / 49> >>	fg/bg Default
-	B<< C<Ps = 90 / 100> >>	fg/bg Bright Black
-	B<< C<Ps = 91 / 101> >>	fg/bg Bright Red
-	B<< C<Ps = 92 / 102> >>	fg/bg Bright Green
-	B<< C<Ps = 93 / 103> >>	fg/bg Bright Yellow
-	B<< C<Ps = 94 / 104> >>	fg/bg Bright Blue
-	B<< C<Ps = 95 / 105> >>	fg/bg Bright Magenta
-	B<< C<Ps = 96 / 106> >>	fg/bg Bright Cyan
-	B<< C<Ps = 97 / 107> >>	fg/bg Bright White
-	B<< C<Ps = 99 / 109> >>	fg/bg Bright Default
+	B<< C<Pm = 0> >>	Normal (default)
+	B<< C<Pm = 1 / 21> >>	On / Off Bold (bright fg)
+	B<< C<Pm = 3 / 23> >>	On / Off Italic
+	B<< C<Pm = 4 / 24> >>	On / Off Underline
+	B<< C<Pm = 5 / 25> >>	On / Off Slow Blink (bright bg)
+	B<< C<Pm = 6 / 26> >>	On / Off Rapid Blink (bright bg)
+	B<< C<Pm = 7 / 27> >>	On / Off Inverse
+	B<< C<Pm = 8 / 27> >>	On / Off Invisible (NYI)
+	B<< C<Pm = 30 / 40> >>	fg/bg Black
+	B<< C<Pm = 31 / 41> >>	fg/bg Red
+	B<< C<Pm = 32 / 42> >>	fg/bg Green
+	B<< C<Pm = 33 / 43> >>	fg/bg Yellow
+	B<< C<Pm = 34 / 44> >>	fg/bg Blue
+	B<< C<Pm = 35 / 45> >>	fg/bg Magenta
+	B<< C<Pm = 36 / 46> >>	fg/bg Cyan
+	B<< C<Pm = 37 / 47> >>	fg/bg White
+	B<< C<Pm = 38;5 / 48;5> >>	set fg/bg to colour #m (ISO 8613-6)
+	B<< C<Pm = 39 / 49> >>	fg/bg Default
+	B<< C<Pm = 90 / 100> >>	fg/bg Bright Black
+	B<< C<Pm = 91 / 101> >>	fg/bg Bright Red
+	B<< C<Pm = 92 / 102> >>	fg/bg Bright Green
+	B<< C<Pm = 93 / 103> >>	fg/bg Bright Yellow
+	B<< C<Pm = 94 / 104> >>	fg/bg Bright Blue
+	B<< C<Pm = 95 / 105> >>	fg/bg Bright Magenta
+	B<< C<Pm = 96 / 106> >>	fg/bg Bright Cyan
+	B<< C<Pm = 97 / 107> >>	fg/bg Bright White
+	B<< C<Pm = 99 / 109> >>	fg/bg Bright Default
 
 =end table
 
@@ -1629,6 +1627,20 @@ Device Status Report (DSR)
 	B<< C<Ps = 6> >>	Report Cursor Position (CPR) [row;column] as B<< C<ESC [ r ; c R> >>
 	B<< C<Ps = 7> >>	Request Display Name
 	B<< C<Ps = 8> >>	Request Version Number (place in window title)
+
+=end table
+
+=item B<< C<ESC [ Ps SP q> >>
+
+Set Cursor Style (DESCUSR)
+
+=begin table
+
+	B<< C<Ps = 0> >>	Blink Block
+	B<< C<Ps = 1> >>	Blink Block
+	B<< C<Ps = 2> >>	Steady Block
+	B<< C<Ps = 3> >>	Blink Underline
+	B<< C<Ps = 4> >>	Steady Underline
 
 =end table
 
@@ -1713,7 +1725,7 @@ Toggle DEC Private Mode Values (rxvt extension). I<where>
 
 =end table
 
-=item B<< C<Pm = 2> >> (ANSI/VT52 mode)
+=item B<< C<Pm = 2> >> (DECANM)
 
 =begin table
 
@@ -1722,57 +1734,57 @@ Toggle DEC Private Mode Values (rxvt extension). I<where>
 
 =end table
 
-=item B<< C<Pm = 3> >>
+=item B<< C<Pm = 3> >> (DECCOLM)
 
 =begin table
 
-	B<< C<h> >>	132 Column Mode (DECCOLM)
-	B<< C<l> >>	80 Column Mode (DECCOLM)
+	B<< C<h> >>	132 Column Mode
+	B<< C<l> >>	80 Column Mode
 
 =end table
 
-=item B<< C<Pm = 4> >>
+=item B<< C<Pm = 4> >> (DECSCLM)
 
 =begin table
 
-	B<< C<h> >>	Smooth (Slow) Scroll (DECSCLM)
-	B<< C<l> >>	Jump (Fast) Scroll (DECSCLM)
+	B<< C<h> >>	Smooth (Slow) Scroll
+	B<< C<l> >>	Jump (Fast) Scroll
 
 =end table
 
-=item B<< C<Pm = 5> >>
+=item B<< C<Pm = 5> >> (DECSCNM)
 
 =begin table
 
-	B<< C<h> >>	Reverse Video (DECSCNM)
-	B<< C<l> >>	Normal Video (DECSCNM)
+	B<< C<h> >>	Reverse Video
+	B<< C<l> >>	Normal Video
 
 =end table
 
-=item B<< C<Pm = 6> >>
+=item B<< C<Pm = 6> >> (DECOM)
 
 =begin table
 
-	B<< C<h> >>	Origin Mode (DECOM)
-	B<< C<l> >>	Normal Cursor Mode (DECOM)
+	B<< C<h> >>	Origin Mode
+	B<< C<l> >>	Normal Cursor Mode
 
 =end table
 
-=item B<< C<Pm = 7> >>
+=item B<< C<Pm = 7> >> (DECAWM)
 
 =begin table
 
-	B<< C<h> >>	Wraparound Mode (DECAWM)
-	B<< C<l> >>	No Wraparound Mode (DECAWM)
+	B<< C<h> >>	Wraparound Mode
+	B<< C<l> >>	No Wraparound Mode
 
 =end table
 
-=item B<< C<Pm = 8> >> I<unimplemented>
+=item B<< C<Pm = 8> >> (DECARM) I<unimplemented>
 
 =begin table
 
-	B<< C<h> >>	Auto-repeat Keys (DECARM)
-	B<< C<l> >>	No Auto-repeat Keys (DECARM)
+	B<< C<h> >>	Auto-repeat Keys
+	B<< C<l> >>	No Auto-repeat Keys
 
 =end table
 
@@ -1785,7 +1797,7 @@ Toggle DEC Private Mode Values (rxvt extension). I<where>
 
 =end table
 
-=item B<< C<Pm = 25> >>
+=item B<< C<Pm = 25> >> (DECTCEM)
 
 =begin table
 
@@ -1856,7 +1868,7 @@ Enter Tektronix Mode (DECTEK)
 
 X<Priv66>
 
-=item B<< C<Pm = 66> >>
+=item B<< C<Pm = 66> >> (DECNKM)
 
 =begin table
 
@@ -1865,11 +1877,11 @@ X<Priv66>
 
 =end table
 
-=item B<< C<Pm = 67> >>
+=item B<< C<Pm = 67> >> (DECBKM)
 
 =begin table
 
-	B<< C<h> >>	Backspace key sends B<< C<BS> (DECBKM) >>
+	B<< C<h> >>	Backspace key sends B<< C<BS> >>
 	B<< C<l> >>	Backspace key sends B<< C<DEL> >>
 
 =end table
