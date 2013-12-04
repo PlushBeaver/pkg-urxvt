@@ -717,7 +717,7 @@ rxvt_term::scr_scroll_text (int row1, int row2, int count) NOTHROW
       if (option (Opt_scrollWithBuffer)
           && view_start != 0
           && view_start != -saveLines)
-        scr_page (UP, count);
+        scr_page (count);
 
       if (SHOULD_INVOKE (HOOK_SCROLL_BACK))
         HOOK_INVOKE ((this, HOOK_SCROLL_BACK, DT_INT, count, DT_INT, top_row, DT_END));
@@ -1242,20 +1242,16 @@ rxvt_term::scr_gotorc (int row, int col, int relative) NOTHROW
 void
 rxvt_term::scr_index (enum page_dirn direction) NOTHROW
 {
-  int dirn;
-
   want_refresh = 1;
   ZERO_SCROLLBACK ();
-
-  dirn = ((direction == UP) ? 1 : -1);
 
   screen.flags &= ~Screen_WrapNext;
 
   if ((screen.cur.row == screen.bscroll && direction == UP)
       || (screen.cur.row == screen.tscroll && direction == DN))
-    scr_scroll_text (screen.tscroll, screen.bscroll, dirn);
+    scr_scroll_text (screen.tscroll, screen.bscroll, direction);
   else
-    screen.cur.row += dirn;
+    screen.cur.row += direction;
 
   clamp_it (screen.cur.row, 0, nrow - 1);
   selection_check (0);
@@ -1903,7 +1899,8 @@ rxvt_term::scr_touch (bool refresh) NOTHROW
 void
 rxvt_term::scr_move_to (int y, int len) NOTHROW
 {
-  scr_changeview ((top_row - nrow) * (len - y) / len + (nrow - 1));
+  // lerp (y, 0, len, top_row, nrow - 1)
+  scr_changeview (top_row + (nrow - 1 - top_row) * y / len);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1912,13 +1909,9 @@ rxvt_term::scr_move_to (int y, int len) NOTHROW
  * direction should be UP or DN
  */
 bool
-rxvt_term::scr_page (enum page_dirn direction, int nlines) NOTHROW
+rxvt_term::scr_page (int nlines) NOTHROW
 {
-  int new_view_start =
-    direction == UP ? view_start - nlines
-                    : view_start + nlines;
-
-  return scr_changeview (new_view_start);
+  return scr_changeview (view_start - nlines);
 }
 
 bool
@@ -2050,6 +2043,7 @@ rxvt_term::scr_refresh () NOTHROW
          ccol2;  /* Cursor colour2      */
   rend_t cur_rend;
   int cur_col;
+  int cursorwidth;
 
   want_refresh = 0;        /* screen is current */
 
@@ -2084,8 +2078,6 @@ rxvt_term::scr_refresh () NOTHROW
    * C: set the cursor character (s)
    */
   {
-    bool setoldcursor;
-
 #ifdef CURSOR_BLINK
     if (hidden_cursor)
       showcursor = 0;
@@ -2097,6 +2089,11 @@ rxvt_term::scr_refresh () NOTHROW
 
         while (col && ROW(screen.cur.row).t[col] == NOCHAR)
           col--;
+
+        cursorwidth = 1;
+        while (col + cursorwidth < ncol
+               && ROW(screen.cur.row).t[col + cursorwidth] == NOCHAR)
+          cursorwidth++;
 
         cur_rend = ROW(screen.cur.row).r[col];
         cur_col = col;
@@ -2141,7 +2138,6 @@ rxvt_term::scr_refresh () NOTHROW
       }
 
     /* make sure no outline cursor is left around */
-    setoldcursor = 0;
     if (ocrow != -1)
       {
         if (screen.cur.row - view_start != ocrow
@@ -2150,26 +2146,19 @@ rxvt_term::scr_refresh () NOTHROW
             if (ocrow < nrow
                 && oldcursor.col < ncol)
               drawn_buf[ocrow].r[oldcursor.col] ^= (RS_RVid | RS_Uline);
-
-            if (focus || !showcursor)
-              oldcursor.row = -1;
-            else
-              setoldcursor = 1;
           }
       }
-    else if (!focus)
-      setoldcursor = 1;
 
-    if (setoldcursor)
+    // save the current cursor coordinates if the cursor is visible
+    // and the window is unfocused, so as to clear the outline cursor
+    // in the next refresh if the cursor moves
+    if (showcursor && !focus && screen.cur.row - view_start < nrow)
       {
-        if (screen.cur.row - view_start >= nrow)
-          oldcursor.row = -1;
-        else
-          {
-            oldcursor.row = screen.cur.row - view_start;
-            oldcursor.col = screen.cur.col;
-          }
+        oldcursor.row = screen.cur.row - view_start;
+        oldcursor.col = screen.cur.col;
       }
+    else
+      oldcursor.row = -1;
   }
 
 #ifndef NO_SLOW_LINK_SUPPORT
@@ -2445,6 +2434,10 @@ rxvt_term::scr_refresh () NOTHROW
 
           if (ecb_unlikely (rend & RS_Uline && font->descent > 1 && fore != back))
             {
+              if (showcursor && focus && row == screen.cur.row
+                  && IN_RANGE_EXC (col, cur_col, cur_col + cursorwidth))
+                XSetForeground (dpy, gc, pix_colors[ccol1]);
+              else
 #if ENABLE_FRILLS
               if (ISSET_PIXCOLOR (Color_underline))
                 XSetForeground (dpy, gc, pix_colors[Color_underline]);
@@ -2468,25 +2461,10 @@ rxvt_term::scr_refresh () NOTHROW
         scr_set_char_rend (ROW(screen.cur.row), cur_col, cur_rend);
       else if (oldcursor.row >= 0)
         {
-          int cursorwidth = 1;
-          int col = oldcursor.col;
-
-          while (col && ROW(screen.cur.row).t[col] == NOCHAR)
-            col--;
-
-          while (col + cursorwidth < ncol
-                 && drawn_buf[oldcursor.row].t[col + cursorwidth] == NOCHAR)
-            cursorwidth++;
-
-#ifndef NO_CURSORCOLOR
-          if (ISSET_PIXCOLOR (Color_cursor))
-            XSetForeground (dpy, gc, pix_colors[Color_cursor]);
-          else
-#endif
-            XSetForeground (dpy, gc, pix_colors[ccol1]);
+          XSetForeground (dpy, gc, pix_colors[ccol1]);
 
           XDrawRectangle (dpy, vt, gc,
-                          Col2Pixel (col),
+                          Col2Pixel (cur_col),
                           Row2Pixel (oldcursor.row),
                           (unsigned int) (Width2Pixel (cursorwidth) - 1),
                           (unsigned int) (Height2Pixel (1) - 1));
@@ -2703,8 +2681,8 @@ void
 rxvt_term::selection_changed () NOTHROW
 {
   line_t &r1 = ROW (selection.beg.row);
-  while (selection.beg.col >    0 && r1.t [selection.beg.col] == NOCHAR)
-    --selection.beg.col;
+  while (selection.beg.col < r1.l && r1.t [selection.beg.col] == NOCHAR)
+    ++selection.beg.col;
 
   line_t &r2 = ROW (selection.end.row);
   while (selection.end.col < r2.l && r2.t [selection.end.col] == NOCHAR)

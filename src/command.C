@@ -512,12 +512,12 @@ rxvt_term::key_press (XKeyEvent &ev)
 
               if (keysym == XK_Prior)
                 {
-                  scr_page (UP, lnsppg);
+                  scr_page (lnsppg);
                   return;
                 }
               else if (keysym == XK_Next)
                 {
-                  scr_page (DN, lnsppg);
+                  scr_page (-lnsppg);
                   return;
                 }
             }
@@ -526,12 +526,12 @@ rxvt_term::key_press (XKeyEvent &ev)
             {
               if (keysym == XK_Up)
                 {
-                  scr_page (UP, 1);
+                  scr_page (1);
                   return;
                 }
               else if (keysym == XK_Down)
                 {
-                  scr_page (DN, 1);
+                  scr_page (-1);
                   return;
                 }
             }
@@ -541,12 +541,12 @@ rxvt_term::key_press (XKeyEvent &ev)
             {
               if (keysym == XK_Home)
                 {
-                  scr_move_to (0, 1);
+                  scr_changeview (top_row);
                   return;
                 }
               else if (keysym == XK_End)
                 {
-                  scr_move_to (1, 1);
+                  scr_changeview (0);
                   return;
                 }
             }
@@ -1079,7 +1079,7 @@ rxvt_term::cont_scroll_cb (ev::timer &w, int revents)
 void
 rxvt_term::sel_scroll_cb (ev::timer &w, int revents)
 {
-  if (scr_page (scroll_selection_dir, scroll_selection_lines))
+  if (scr_page (scroll_selection_lines))
     {
       selection_extend (selection_save_x, selection_save_y, selection_save_state);
       want_refresh = 1;
@@ -1094,7 +1094,7 @@ rxvt_term::sel_scroll_cb (ev::timer &w, int revents)
 void
 rxvt_term::slip_wheel_cb (ev::timer &w, int revents)
 {
-  if (scr_changeview (view_start - mouse_slip_wheel_speed))
+  if (scr_page (mouse_slip_wheel_speed))
     {
       want_refresh = 1;
       refresh_check ();
@@ -1640,6 +1640,7 @@ rxvt_term::x_cb (XEvent &ev)
                     if (ev.xbutton.y < int_bwidth
                         || Pixel2Row (ev.xbutton.y) > (nrow-1))
                       {
+                        page_dirn scroll_selection_dir;
                         int dist;
 
                         /* don't clobber the current delay if we are
@@ -1672,6 +1673,7 @@ rxvt_term::x_cb (XEvent &ev)
                                                  + 1;
                         min_it (scroll_selection_lines,
                                 SELECTION_SCROLL_MAX_LINES);
+                        scroll_selection_lines *= scroll_selection_dir;
                       }
                     else
                       {
@@ -2197,24 +2199,23 @@ rxvt_term::button_release (XButtonEvent &ev)
           case Button4:
           case Button5:
             {
-              int i;
-              page_dirn v;
+              int lines;
+              page_dirn dirn;
 
-              v = ev.button == Button4 ? UP : DN;
+              dirn = ev.button == Button4 ? UP : DN;
 
               if (ev.state & ShiftMask)
-                i = 1;
+                lines = 1;
               else if (option (Opt_mouseWheelScrollPage))
-                i = nrow - 1;
+                lines = nrow - 1;
               else
-                i = 5;
+                lines = 5;
 
 # ifdef MOUSE_SLIP_WHEELING
               if (ev.state & ControlMask)
                 {
-                  mouse_slip_wheel_speed += v ? -1 : 1;
-                  if (mouse_slip_wheel_speed < -nrow) mouse_slip_wheel_speed = -nrow;
-                  if (mouse_slip_wheel_speed > +nrow) mouse_slip_wheel_speed = +nrow;
+                  mouse_slip_wheel_speed += dirn;
+                  clamp_it (mouse_slip_wheel_speed, -nrow, nrow);
 
                   if (!slip_wheel_ev.is_active ())
                     slip_wheel_ev.start (SCROLLBAR_CONTINUOUS_DELAY, SCROLLBAR_CONTINUOUS_DELAY);
@@ -2222,7 +2223,7 @@ rxvt_term::button_release (XButtonEvent &ev)
               else
 # endif
                 {
-                  scr_page (v, i);
+                  scr_page (dirn, lines);
                   scrollBar.show (1);
                 }
             }
@@ -2801,7 +2802,7 @@ static const unsigned char csi_defaults[] =
 void ecb_hot
 rxvt_term::process_csi_seq ()
 {
-  unicode_t ch, priv, i;
+  unicode_t ch, priv, prev_ch, i;
   unsigned int nargs, p;
   int n, ndef;
   int arg[ESC_ARGS] = { };
@@ -2817,6 +2818,7 @@ rxvt_term::process_csi_seq ()
       ch = cmd_getc ();
     }
 
+  prev_ch = 0;
   /* read any numerical arguments */
   for (n = -1; ch < CSI_ICH; )
     {
@@ -2836,6 +2838,7 @@ rxvt_term::process_csi_seq ()
       else if (IS_CONTROL (ch))
         process_nonprinting (ch);
 
+      prev_ch = ch;
       ch = cmd_getc ();
     }
 
@@ -3077,6 +3080,11 @@ rxvt_term::process_csi_seq ()
           scr_insert_mode (1);
         else if (arg[0] == 20)
           priv_modes |= PrivMode_LFNL;
+        break;
+
+      case CSI_71:		// DESCUSR: set cursor style
+        if (prev_ch == ' ')
+          set_cursor_style (arg[0]);
         break;
 
         /*
@@ -3992,6 +4000,22 @@ rxvt_term::process_sgr_mode (unsigned int nargs, const int *arg)
 #endif
         }
     }
+}
+
+void
+rxvt_term::set_cursor_style (int style)
+{
+  if (!IN_RANGE_INC (style, 0, 4))
+    return;
+
+  set_option (Opt_cursorUnderline, style >= 3);
+
+#ifdef CURSOR_BLINK
+  set_option (Opt_cursorBlink, !style || (style & 1));
+  cursor_blink_reset ();
+#endif
+
+  want_refresh = 1;
 }
 /*}}} */
 

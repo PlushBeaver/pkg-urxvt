@@ -553,7 +553,7 @@ struct signalfd_siginfo
 
 /* work around x32 idiocy by defining proper macros */
 #if __x86_64 || _M_AMD64
-  #if __ILP32
+  #if _ILP32
     #define ECB_AMD64_X32 1
   #else
     #define ECB_AMD64 1
@@ -629,7 +629,9 @@ struct signalfd_siginfo
     #elif defined __s390__ || defined __s390x__
       #define ECB_MEMORY_FENCE         __asm__ __volatile__ ("bcr 15,0" : : : "memory")
     #elif defined __mips__
-      #define ECB_MEMORY_FENCE         __asm__ __volatile__ ("sync"     : : : "memory")
+      /* GNU/Linux emulates sync on mips1 architectures, so we force its use */
+      /* anybody else who still uses mips1 is supposed to send in their version, with detection code. */
+      #define ECB_MEMORY_FENCE         __asm__ __volatile__ (".set mips2; sync; .set mips0" : : : "memory")
     #elif defined __alpha__
       #define ECB_MEMORY_FENCE         __asm__ __volatile__ ("mb"       : : : "memory")
     #elif defined __hppa__
@@ -637,6 +639,12 @@ struct signalfd_siginfo
       #define ECB_MEMORY_FENCE_RELEASE __asm__ __volatile__ ("")
     #elif defined __ia64__
       #define ECB_MEMORY_FENCE         __asm__ __volatile__ ("mf"       : : : "memory")
+    #elif defined __m68k__
+      #define ECB_MEMORY_FENCE         __asm__ __volatile__ (""         : : : "memory")
+    #elif defined __m88k__
+      #define ECB_MEMORY_FENCE         __asm__ __volatile__ ("tb1 0,%%r0,128" : : : "memory")
+    #elif defined __sh__
+      #define ECB_MEMORY_FENCE         __asm__ __volatile__ (""         : : : "memory")
     #endif
   #endif
 #endif
@@ -1053,15 +1061,42 @@ ecb_inline ecb_bool ecb_little_endian (void) { return ecb_byteorder_helper () ==
     || defined __alpha__ \
     || defined __hppa__ \
     || defined __ia64__ \
+    || defined __m68k__ \
+    || defined __m88k__ \
+    || defined __sh__ \
     || defined _M_IX86 || defined _M_AMD64 || defined _M_IA64
   #define ECB_STDFP 1
   #include <string.h> /* for memcpy */
 #else
   #define ECB_STDFP 0
-  #include <math.h> /* for frexp*, ldexp* */
 #endif
 
 #ifndef ECB_NO_LIBM
+
+  #include <math.h> /* for frexp*, ldexp*, INFINITY, NAN */
+
+  #ifdef NEN
+    #define ECB_NAN NAN
+  #else
+    #define ECB_NAN INFINITY
+  #endif
+
+  /* converts an ieee half/binary16 to a float */
+  ecb_function_ float ecb_binary16_to_float (uint16_t x) ecb_const;
+  ecb_function_ float
+  ecb_binary16_to_float (uint16_t x)
+  {
+    int e = (x >> 10) & 0x1f;
+    int m = x & 0x3ff;
+    float r;
+
+    if      (!e     ) r = ldexpf (m        ,    -24);
+    else if (e != 31) r = ldexpf (m + 0x400, e - 25);
+    else if (m      ) r = ECB_NAN;
+    else              r = INFINITY;
+
+    return x & 0x8000 ? -r : r;
+  }
 
   /* convert a float to ieee single/binary32 */
   ecb_function_ uint32_t ecb_float_to_binary32 (float x) ecb_const;
@@ -2106,8 +2141,6 @@ evpipe_init (EV_P)
           fd_intern (fds [0]);
         }
 
-      fd_intern (fds [1]);
-
       evpipe [0] = fds [0];
 
       if (evpipe [1] < 0)
@@ -2122,6 +2155,8 @@ evpipe_init (EV_P)
           dup2 (fds [1], evpipe [1]);
           close (fds [1]);
         }
+
+      fd_intern (evpipe [1]);
 
       ev_io_set (&pipe_w, evpipe [0] < 0 ? evpipe [1] : evpipe [0], EV_READ);
       ev_io_start (EV_A_ &pipe_w);

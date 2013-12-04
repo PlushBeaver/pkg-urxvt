@@ -16,19 +16,34 @@ WISH: coloured pastebin
 WISH: load system-wide config file even if we don't have one
 WISH: look into XAddConnectionWatch, does anybody need that?
 DUMB: support tex fonts
-TODO: decrqm http://ue.tst.eu/71d7dbd1fcfeaa7d2a4b96eb957d570c.txt
 TODO: perl-shell-window? perl-unix-socket?
 TODO: command line editing when icanon?
 TODO: split ROW into a ROW_fast (0..total*2-1) and ROW macros?
 TODO: catch exceptions when calling perl hooks
 TODO: xdbe
 TODO: optimise bg reeval for resize for common patterns (pixmap bigger than window?)
-TODO: DEC PM 4h/4l should toggle jumpscroll on or off (PrivMode_smoothScroll)
 TODO: pack rxvt_fatal messages into the exception object
 TODO: load must not cache, but global image cache must be cleaned
 TODO: provide something like % for easy access for parse_keysym
 TODO: description into --help output?
 TODO: rxvt -help => (see rxvt-XXX(1))?
+TODO: xor_rect should shift right
+TODO IMPL: recalc bg only when not fully covering (no alpha, repeat|extend etc..)
+
+TODO IMPL: colour-change event with index
+TODO IMPL: recalc bg always on bg colour change
+
+9.19 Sun Oct 27 17:16:07 CET 2013
+	- work around perl 5.18.0 breakage in tabbed extension
+          (reported by Karol Blazewicz) and in pod (Dominic Hargreaves).
+	- fix regression that caused the double-click word selection to
+	  erroneously include a tab on the left of the selected word.
+        - implement FOCUS variable and focus_fade function in background
+          expression, to allow focus-sensitive background images.
+	- add support for the set cursor style (DECSCUSR) control
+	  function.
+	- honour cursorColor also when the cursor style is underline.
+        - export some Color_xxx constants to Perl.
 
 9.18 Sun Mar 24 15:33:35 CET 2013
 	- fix regression that caused artifacts on resize.
@@ -36,7 +51,7 @@ TODO: rxvt -help => (see rxvt-XXX(1))?
 9.17 Fri Mar  1 13:46:08 CET 2013
 	- add shade operator in background perl extension.
         - avoid starting or ending the selection in the middle of wide
-          characters to avoid artifacts (reproted by Tiago Resende).
+          characters to avoid artifacts (reported by Tiago Resende).
 	- fix artifacts that may occur if the character in the cursor
 	  cell has width > 1 (reported by Tiago Resende).
 	- fix regression that causes artifacts on scrolling if
