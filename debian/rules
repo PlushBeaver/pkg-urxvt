@@ -125,7 +125,7 @@ build-stamp: config.status
 	dh_testdir
 
 	mkdir -p tmp
-	dh_installdirs -A usr/bin etc/X11/app-defaults usr/share/pixmaps
+	dh_installdirs -A usr/bin etc/X11/app-defaults usr/share/pixmaps /usr/share/applications
 
 	set -e; \
 	for x in unicode unicode-256color unicode-lite; do \
@@ -147,6 +147,7 @@ build-stamp: config.status
 		ln -sf urxvt.1.gz $$y/usr/share/man/man1/rxvt-unicode.1.gz; \
 		chrpath -d $$y/usr/bin/*; \
 		install -m644 debian/*.xpm $$y/usr/share/pixmaps; \
+		install -m644 debian/*.desktop $$y/usr/share/applications; \
 		install -m755 debian/urxvtcd $$y/usr/bin; \
 		install -m644 debian/urxvtcd.1 $$y/usr/share/man/man1; \
 		gzip -9 $$y/usr/share/man/man1/urxvtcd.1; \
