@@ -5,10 +5,10 @@ Forwarded: no
 Reviewed-By: Ryan Kavanagh <ryanakca@kubuntu.org>
 Last-Update: 2011-03-06
 
-Index: pkg-urxvt/doc/rxvt.7.pod
+Index: rxvt-unicode/doc/rxvt.7.pod
 ===================================================================
---- pkg-urxvt.orig/doc/rxvt.7.pod	2013-02-12 12:15:15.007702780 -0500
-+++ pkg-urxvt/doc/rxvt.7.pod	2013-02-12 12:15:15.003702685 -0500
+--- rxvt-unicode.orig/doc/rxvt.7.pod	2013-12-19 10:26:34.871521712 -0500
++++ rxvt-unicode/doc/rxvt.7.pod	2013-12-19 10:26:34.871521712 -0500
 @@ -546,12 +546,9 @@
  
  =head3 My numerical keypad acts weird and generates differing output?
@@ -51,7 +51,7 @@ Index: pkg-urxvt/doc/rxvt.7.pod
  
  =head2 Encoding / Locale / Input Method Issues
  
-@@ -1091,14 +1069,12 @@
+@@ -1089,14 +1067,12 @@
  
  =head3 I am using Debian GNU/Linux and have a problem...
  
