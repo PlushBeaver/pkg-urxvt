@@ -249,6 +249,11 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
+	for x in unicode unicode-256color unicode-lite; do \
+	    y=$(CURDIR)/debian/rxvt-$$x ;\
+	    chgrp utmp $$y/usr/bin/urxvt $$y/usr/bin/urxvtd;\
+	    chmod g+s $$y/usr/bin/urxvt $$y/usr/bin/urxvtd;\
+	done
 #	dh_perl
 #	dh_python
 #	dh_makeshlibs
