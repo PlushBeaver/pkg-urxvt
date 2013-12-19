@@ -1,3 +1,23 @@
+rxvt-unicode (9.19-1) unstable; urgency=medium
+
+  [ Ryan Kavanagh ]
+  * Imported Upstream version 9.19 (Closes: #731334)
+  * Drop the following patches, applied upstream:
+    + 13_section_mismatch.diff
+    + 14_pod_errors.diff
+    + 15_perl_518.diff
+  * Update standards version to 3.9.5
+  * Offer both 16x16 and 32x32 icons in menu (Closes: #723889)
+  * Allow urxvt and urxvtd to update utmp (Closes: #500230)
+    + Override lintian warning setgid-binary for /usr/bin/urxvt and
+      /usr/bin/urxvtd
+
+  [ James M Leddy ]
+  * Added .desktop files so that we work with window managers like Gnome and
+    Unity (Closes: #724623)
+
+ -- Ryan Kavanagh <rak@debian.org>  Sat, 21 Dec 2013 16:17:07 -0500
+
 rxvt-unicode (9.18-3) unstable; urgency=low
 
   * Tabbed extension now works with Perl 5.18 (Closes: #721456),
