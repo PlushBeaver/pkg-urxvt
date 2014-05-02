@@ -27,7 +27,7 @@
  * Copyright (c) 2001      Marius Gedminas
  *				- Ctrl/Mod4+Tab works like Meta+Tab (options)
  * Copyright (c) 2003      Rob McMullen <robm@flipturn.org>
- * Copyright (c) 2003-2011 Marc Lehmann <schmorp@schmorp.de>
+ * Copyright (c) 2003-2014 Marc Lehmann <schmorp@schmorp.de>
  * Copyright (c) 2007      Emanuele Giaquinta <e.giaquinta@glauco.it>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -402,6 +402,15 @@ map_function_key (KeySym keysym)
   return param;
 }
 
+static inline wchar_t *
+rxvt_wcsdup (const wchar_t *str, int len)
+{
+  wchar_t *r = (wchar_t *)rxvt_malloc ((len + 1) * sizeof (wchar_t));
+  memcpy (r, str, len * sizeof (wchar_t));
+  r[len] = 0;
+  return r;
+}
+
 void ecb_cold
 rxvt_term::key_press (XKeyEvent &ev)
 {
@@ -578,6 +587,21 @@ rxvt_term::key_press (XKeyEvent &ev)
 #endif
                 }
             }
+        }
+
+      if (ctrl && meta && (keysym == XK_c || keysym == XK_v))
+        {
+          if (keysym == XK_v)
+            selection_request (ev.time, Sel_Clipboard);
+          else if (selection.len > 0)
+            {
+              free (selection.clip_text);
+              selection.clip_text = rxvt_wcsdup (selection.text, selection.len);
+              selection.clip_len = selection.len;
+              selection_grab (CurrentTime, true);
+            }
+
+          return;
         }
 
 #if ENABLE_FRILLS || ISO_14755
@@ -3229,7 +3253,7 @@ rxvt_term::get_to_st (unicode_t &ends_how)
   unicode_t ch;
   bool seen_esc = false;
   unsigned int n = 0;
-  wchar_t string[STRING_MAX];
+  wchar_t string[CBUFSIZ];
 
   while ((ch = cmd_getc ()) != NOCHAR)
     {
@@ -3254,7 +3278,7 @@ rxvt_term::get_to_st (unicode_t &ends_how)
 
       seen_esc = false;
 
-      if (n >= STRING_MAX - 1)
+      if (n >= sizeof (string) - 1)
         // stop at some sane length
         return NULL;
 
@@ -3381,7 +3405,7 @@ rxvt_term::process_xterm_seq (int op, char *str, char resp)
                 && actual_format == 8)
               str = (const char *)(value);
 
-            tt_printf ("\033]%d;%s%c", op, str, resp);
+            tt_printf ("\033]%d;%s%c", op, option (Opt_insecure) ? str : "", resp);
 
             XFree (value);
           }

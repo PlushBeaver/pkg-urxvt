@@ -1378,6 +1378,12 @@ B<Meta> modifier) to be inserted as if it had been typed on the keyboard.
 Pressing B<Shift-Insert> causes the value of the PRIMARY selection to be
 inserted too.
 
+rxvt-unicode also provides the bindings B<Ctrl-Meta-c> and
+<Ctrl-Meta-v> to interact with the CLIPBOARD selection. The first
+binding causes the value of the internal selection to be copied to the
+CLIPBOARD selection, while the second binding causes the value of the
+CLIPBOARD selection to be inserted.
+
 =back
 
 =head1 CHANGING FONTS
@@ -1511,8 +1517,8 @@ values for the 256 colour mode in parentheses).
 
 The RGB cube uses indices 16..79 (16..231) using the following formulas:
 
-   index_88  = (r *  4 + g) *  4 + b + 16   # r, g, b = 0..3
-   index_256 = (r * 16 + g) * 16 + b + 16   # r, g, b = 0..15
+   index_88  = (r * 4 + g) * 4 + b + 16   # r, g, b = 0..3
+   index_256 = (r * 6 + g) * 6 + b + 16   # r, g, b = 0..5
 
 The grayscale ramp uses indices 80..87 (232..239), from 10% to 90% in 10%
 steps (1/26 to 25/26 in 1/26 steps) - black and white are already part of
