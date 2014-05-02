@@ -664,7 +664,7 @@ enum {
 // do not change these constants lightly, there are many interdependencies
 #define IMBUFSIZ               128     // input modifier buffer sizes
 #define KBUFSZ                 512     // size of keyboard mapping buffer
-#define CBUFSIZ                2048    // size of command buffer
+#define CBUFSIZ                32768   // size of command buffer (longest command sequence possible)
 #define CBUFCNT                8       // never call pty_fill/cmd_parse more than this often in a row
 #define UBUFSIZ                2048    // character buffer
 
@@ -1540,7 +1540,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   bool scr_page (int nlines) NOTHROW;
   bool scr_page (enum page_dirn direction, int nlines) NOTHROW
   {
-    scr_page (direction * nlines);
+    return scr_page (direction * nlines);
   }
   bool scr_changeview (int new_view_start) NOTHROW;
   void scr_bell () NOTHROW;
