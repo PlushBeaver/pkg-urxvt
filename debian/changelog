@@ -1,3 +1,13 @@
+rxvt-unicode (9.20-1) unstable; urgency=high
+
+  * Imported Upstream version 9.20 (Closes: #746593)
+    + This fixes a user-assisted arbitrary commands execution vulnerability
+      that could be exploited using certain escape sequences in a crafted text
+      file or program output (CVE-2014-3121)
+  * Update copyright holders
+
+ -- Ryan Kavanagh <rak@debian.org>  Fri, 02 May 2014 10:01:13 -0400
+
 rxvt-unicode (9.19-1) unstable; urgency=medium
 
   [ Ryan Kavanagh ]
