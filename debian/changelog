@@ -1,3 +1,12 @@
+rxvt-unicode (9.15-2+deb7u1) wheezy-security; urgency=high
+
+  * Fix user-assisted security vulnerability, 13_CVE-2014-3121.diff:
+    This fixes a user-assisted arbitrary commands execution vulnerability that
+    could be exploited using certain escape sequences in a crafted text file
+    or program output (CVE-2014-3121) (Closes: #746593)
+
+ -- Ryan Kavanagh <rak@debian.org>  Wed, 07 May 2014 09:32:02 -0400
+
 rxvt-unicode (9.15-2) unstable; urgency=low
 
   * Use hardening build flags via dpkg-buildflags
