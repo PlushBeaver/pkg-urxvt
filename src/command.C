@@ -3332,7 +3332,7 @@ rxvt_term::process_xterm_seq (int op, char *str, char resp)
                 && actual_format == 8)
               str = (const char *)(value);
 
-            tt_printf ("\033]%d;%s%c", op, str, resp);
+            tt_printf ("\033]%d;%s%c", op, option (Opt_insecure) ? str : "", resp);
 
             XFree (value);
           }
