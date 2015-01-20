@@ -17,7 +17,7 @@ Build-Depends: debhelper (>= 7.0.0),
  libev-dev,
  libstartup-notification0-dev,
  libgtk2.0-dev
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: http://software.schmorp.de/pkg/rxvt-unicode.html
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-urxvt/pkg-urxvt.git
 Vcs-Git: git://anonscm.debian.org/pkg-urxvt/pkg-urxvt.git
