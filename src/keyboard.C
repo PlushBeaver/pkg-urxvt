@@ -8,7 +8,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -63,17 +63,6 @@
  *       Ni(the size of group i) = hash_bucket_size[Ii].
  */
 
-static void
-output_string (rxvt_term *term, const char *str)
-{
-  if (strncmp (str, "command:", 8) == 0)
-    term->cmdbuf_append (str + 8, strlen (str) - 8);
-  else if (strncmp (str, "perl:", 5) == 0)
-    HOOK_INVOKE((term, HOOK_USER_COMMAND, DT_STR, str + 5, DT_END));
-  else
-    term->tt_write (str, strlen (str));
-}
-
 // return: priority_of_a - priority_of_b
 static int
 compare_priority (keysym_t *a, keysym_t *b)
@@ -102,19 +91,21 @@ keyboard_manager::~keyboard_manager ()
 }
 
 void
-keyboard_manager::register_user_translation (KeySym keysym, unsigned int state, const wchar_t *ws)
+keyboard_manager::register_action (KeySym keysym, unsigned int state, const wchar_t *ws)
 {
-  char *translation = rxvt_wcstoutf8 (ws);
+  char *action = rxvt_wcstoutf8 (ws);
 
   keysym_t *key = new keysym_t;
 
   key->keysym = keysym;
   key->state  = state;
-  key->str    = translation;
+  key->str    = action;
   key->type   = keysym_t::STRING;
 
-  if (strncmp (translation, "builtin:", 8) == 0)
+  if (strncmp (action, "builtin:", 8) == 0)
     key->type = keysym_t::BUILTIN;
+  else if (strncmp (action, "builtin-string:", 15) == 0)
+    key->type = keysym_t::BUILTIN_STRING;
 
   if (keymap.size () == keymap.capacity ())
     keymap.reserve (keymap.size () * 2);
@@ -124,7 +115,7 @@ keyboard_manager::register_user_translation (KeySym keysym, unsigned int state, 
 }
 
 bool
-keyboard_manager::dispatch (rxvt_term *term, KeySym keysym, unsigned int state)
+keyboard_manager::dispatch (rxvt_term *term, KeySym keysym, unsigned int state, const char *kbuf, int len)
 {
   assert (("register_done() need to be called", hash[0] == 0));
 
@@ -143,14 +134,31 @@ keyboard_manager::dispatch (rxvt_term *term, KeySym keysym, unsigned int state)
     {
       keysym_t *key = keymap [index];
 
-      if (key->type != keysym_t::BUILTIN)
+      if (key->type == keysym_t::BUILTIN_STRING)
+        {
+          term->tt_write_user_input (kbuf, len);
+          return true;
+        }
+      else if (key->type != keysym_t::BUILTIN)
         {
           wchar_t *ws = rxvt_utf8towcs (key->str);
           char *str = rxvt_wcstombs (ws);
           // TODO: do (some) translations, unescaping etc, here (allow \u escape etc.)
           free (ws);
 
-          output_string (term, str);
+          if (char *colon = strchr (str, ':'))
+            {
+              if (strncmp (str, "command:", 8) == 0)
+                term->cmdbuf_append (str + 8, strlen (str) - 8);
+              else if (strncmp (str, "string:", 7) == 0)
+                term->tt_write_user_input (colon + 1, strlen (colon + 1));
+              else if (strncmp (str, "perl:", 5) == 0)
+                HOOK_INVOKE ((term, HOOK_USER_COMMAND, DT_STR, colon + 1, DT_END));
+              else
+                HOOK_INVOKE ((term, HOOK_ACTION, DT_STR_LEN, str, colon - str, DT_STR, colon + 1, DT_INT, 0, DT_STR_LEN, kbuf, len, DT_END));
+            }
+          else
+            term->tt_write_user_input (str, strlen (str));
 
           free (str);
 

@@ -7,7 +7,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -2120,11 +2120,11 @@ rxvt_term::scr_refresh () NOTHROW
           ccol2 = Color_bg;
 #endif
 
-        if (focus)
+        if (focus && cursor_type != 2)
           {
             rend_t rend = cur_rend;
 
-            if (option (Opt_cursorUnderline))
+            if (cursor_type == 1)
               rend ^= RS_Uline;
             else
               {
@@ -2138,21 +2138,14 @@ rxvt_term::scr_refresh () NOTHROW
       }
 
     /* make sure no outline cursor is left around */
-    if (ocrow != -1)
-      {
-        if (screen.cur.row - view_start != ocrow
-            || screen.cur.col != oldcursor.col)
-          {
-            if (ocrow < nrow
-                && oldcursor.col < ncol)
-              drawn_buf[ocrow].r[oldcursor.col] ^= (RS_RVid | RS_Uline);
-          }
-      }
+    if (ocrow != -1 && ocrow < nrow && oldcursor.col < ncol)
+      drawn_buf[ocrow].r[oldcursor.col] ^= (RS_RVid | RS_Uline);
 
     // save the current cursor coordinates if the cursor is visible
-    // and the window is unfocused, so as to clear the outline cursor
-    // in the next refresh if the cursor moves
-    if (showcursor && !focus && screen.cur.row - view_start < nrow)
+    // and either the window is unfocused or the cursor style is
+    // vertical bar, so as to clear the outline cursor in the next
+    // refresh if the cursor moves or becomes invisible
+    if (showcursor && (!focus || cursor_type == 2) && screen.cur.row - view_start < nrow)
       {
         oldcursor.row = screen.cur.row - view_start;
         oldcursor.col = screen.cur.col;
@@ -2249,10 +2242,7 @@ rxvt_term::scr_refresh () NOTHROW
       for (col = 0; col < ncol; col++)
         {
           /* compare new text with old - if exactly the same then continue */
-          if (stp[col] == dtp[col]    /* Must match characters to skip. */
-              && (RS_SAME (srp[col], drp[col])    /* Either rendition the same or   */
-                  || (stp[col] == ' ' /* space w/ no background change  */
-                      && GET_BGATTR (srp[col]) == GET_BGATTR (drp[col]))))
+          if (stp[col] == dtp[col] && RS_SAME (srp[col], drp[col]))
             continue;
 
           // redraw one or more characters
@@ -2458,7 +2448,19 @@ rxvt_term::scr_refresh () NOTHROW
   if (showcursor)
     {
       if (focus)
-        scr_set_char_rend (ROW(screen.cur.row), cur_col, cur_rend);
+        {
+          if (cursor_type != 2)
+            scr_set_char_rend (ROW(screen.cur.row), cur_col, cur_rend);
+          else if (oldcursor.row >= 0)
+            {
+              XSetForeground (dpy, gc, pix_colors[ccol1]);
+              XFillRectangle (dpy, vt, gc,
+                              Col2Pixel (cur_col),
+                              Row2Pixel (oldcursor.row),
+                              1,
+                              Height2Pixel (1));
+            }
+        }
       else if (oldcursor.row >= 0)
         {
           XSetForeground (dpy, gc, pix_colors[ccol1]);
@@ -2512,7 +2514,7 @@ rxvt_term::scr_remap_chars () NOTHROW
 }
 
 void ecb_cold
-rxvt_term::scr_recolour (bool refresh) NOTHROW
+rxvt_term::scr_recolor (bool refresh) NOTHROW
 {
   bool transparent = false;
 
@@ -2543,7 +2545,7 @@ rxvt_term::scr_recolour (bool refresh) NOTHROW
 
   XClearWindow (dpy, parent);
 
-  if (scrollBar.win)
+  if (scrollBar.state && scrollBar.win)
     {
       if (transparent)
         XSetWindowBackgroundPixmap (dpy, scrollBar.win, ParentRelative);

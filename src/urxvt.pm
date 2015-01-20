@@ -45,8 +45,14 @@ Or by adding them to the resource for extensions loaded by default:
 
   URxvt.perl-ext-common: default,selection-autotransform
 
-Extensions that add command line parameters or resources on their own are
-loaded automatically when used.
+Extensions may add additional resources and C<actions>, i.e., methods
+which can be bound to a key and invoked by the user. An extension can
+define the resources it support using so called META comments,
+described below. Similarly to builtin resources, extension resources
+can also be specified on the command line as long options (with C<.>
+replaced by C<->), in which case the corresponding extension is loaded
+automatically. For this to work the extension B<must> define META
+comments for its resources.
 
 =head1 API DOCUMENTATION
 
@@ -107,6 +113,23 @@ C<urxvt::term> class on this object.
 
 Additional methods only supported for extension objects are described in
 the C<urxvt::extension> section below.
+
+=head2 META comments
+
+Rxvt-unicode recognizes special meta comments in extensions that define
+different types of metadata.
+
+Currently, it recognises only one such comment:
+
+=over 4
+
+=item #:META:RESOURCE:name:type:desc
+
+The RESOURCE comment defines a resource used by the extension, where
+C<name> is the resource name, C<type> is the resource type, C<boolean>
+or C<string>, and C<desc> is the resource description.
+
+=back
 
 =head2 Hooks
 
@@ -283,27 +306,28 @@ code is run after this hook, and takes precedence.
 
 Called just after the screen gets redrawn. See C<on_refresh_begin>.
 
-=item on_user_command $term, $string
+=item on_action $term, $string
+
+Called whenever an action is invoked for the corresponding extension
+(e.g. via a C<extension:string> builtin action bound to a key, see
+description of the B<keysym> resource in the urxvt(1) manpage). The
+event is simply the action string. Note that an action event is always
+associated to a single extension.
+
+=item on_user_command $term, $string *DEPRECATED*
 
 Called whenever a user-configured event is being activated (e.g. via
 a C<perl:string> action bound to a key, see description of the B<keysym>
 resource in the urxvt(1) manpage).
 
-The event is simply the action string. This interface is assumed to change
-slightly in the future.
-
-=item on_register_command $term, $keysym, $modifiermask, $string
-
-Called after parsing a keysym resource but before registering the
-associated binding. If this hook returns TRUE the binding is not
-registered. It can be used to modify a binding by calling
-C<register_command>.
+The event is simply the action string. This interface is going away in
+preference to the C<on_action> hook.
 
 =item on_resize_all_windows $term, $new_width, $new_height
 
 Called just after the new window size has been calculated, but before
 windows are actually being resized or hints are being set. If this hook
-returns TRUE, setting of the window hints is being skipped.
+returns a true value, setting of the window hints is being skipped.
 
 =item on_x_event $term, $event
 
@@ -352,8 +376,6 @@ manpage), with the additional members C<row> and C<col>, which are the
 
 C<on_key_press> additionally receives the string rxvt-unicode would
 output, if any, in locale-specific encoding.
-
-subwindow.
 
 =item on_client_message $term, $event
 
@@ -566,19 +588,21 @@ no warnings 'utf8';
 sub parse_resource {
    my ($term, $name, $isarg, $longopt, $flag, $value) = @_;
 
-   $name =~ y/-/./ if $isarg;
-
-   $term->scan_meta;
+   $term->scan_extensions;
 
    my $r = $term->{meta}{resource};
    keys %$r; # reset iterator
-   while (my ($pattern, $v) = each %$r) {
-      if (
-         $pattern =~ /\.$/
-         ? $pattern eq substr $name, 0, length $pattern
-         : $pattern eq $name
-      ) {
-         $name = "$urxvt::RESCLASS.$name";
+   while (my ($k, $v) = each %$r) {
+      my $pattern = $k;
+      $pattern =~ y/./-/ if $isarg;
+      my $prefix = $name;
+      my $suffix;
+      if ($pattern =~ /\-$/) {
+         $prefix = substr $name, 0, length $pattern;
+         $suffix = substr $name, length $pattern;
+      }
+      if ($pattern eq $prefix) {
+         $name = "$urxvt::RESCLASS.$k$suffix";
 
          push @{ $term->{perl_ext_3} }, $v->[0];
 
@@ -598,7 +622,7 @@ sub parse_resource {
 sub usage {
    my ($term, $usage_type) = @_;
 
-   $term->scan_meta;
+   $term->scan_extensions;
 
    my $r = $term->{meta}{resource};
 
@@ -669,8 +693,10 @@ sub invoke {
    local $TERM = shift;
    my $htype = shift;
 
-   if ($htype == 0) { # INIT
+   if ($htype == HOOK_INIT) {
       my @dirs = $TERM->perl_libdirs;
+
+      $TERM->scan_extensions;
 
       my %ext_arg;
 
@@ -684,15 +710,29 @@ sub invoke {
       }
 
       for (
-         @{ delete $TERM->{perl_ext_3} },
-         grep $_, map { split /,/, $TERM->resource ("perl_ext_$_") } 1, 2
+         (grep $_, map { split /,/, $TERM->resource ("perl_ext_$_") } 1, 2),
+         @{ delete $TERM->{perl_ext_3} }
       ) {
          if ($_ eq "default") {
-            $ext_arg{$_} ||= [] for qw(selection option-popup selection-popup searchable-scrollback readline);
+
+            $ext_arg{$_} = []
+               for qw(selection option-popup selection-popup readline searchable-scrollback);
+
+            for ($TERM->_keysym_resources) {
+               next if /^(?:string|command|builtin|builtin-string|perl)/;
+               next unless /^([A-Za-z0-9_\-]+):/;
+
+               my $ext = $1;
+
+               $ext_arg{$ext} = [];
+            }
+
          } elsif (/^-(.*)$/) {
             delete $ext_arg{$1};
+
          } elsif (/^([^<]+)<(.*)>$/) {
             push @{ $ext_arg{$1} }, $2;
+
          } else {
             $ext_arg{$_} ||= [];
          }
@@ -718,6 +758,19 @@ sub invoke {
       verbose 10, "$HOOKNAME[$htype] (" . (join ", ", $TERM, @_) . ")"
          if $verbosity >= 10;
 
+      if ($htype == HOOK_ACTION) {
+         # this hook is only sent to the extension with the name
+         # matching the first arg
+         my $pkg = shift;
+         $pkg =~ y/-/_/;
+         $pkg = "urxvt::ext::$pkg";
+
+         $cb = $cb->{$pkg}
+            or return undef; #TODO: maybe warn user?
+
+         $cb = { $pkg => $cb };
+      }
+
       for my $pkg (keys %$cb) {
          my $retval_ = eval { $cb->{$pkg}->($TERM->{_pkg}{$pkg} || $TERM, @_) };
          $retval ||= $retval_;
@@ -732,7 +785,7 @@ sub invoke {
          if $verbosity >= 11;
    }
 
-   if ($htype == 1) { # DESTROY
+   if ($htype == HOOK_DESTROY) {
       # clear package objects
       %$_ = () for values %{ $TERM->{_pkg} };
 
@@ -829,8 +882,11 @@ sub urxvt::destroy_hook(&) {
 =item $self->enable ($hook_name => $cb[, $hook_name => $cb..])
 
 Dynamically enable the given hooks (named without the C<on_> prefix) for
-this extension, replacing any previous hook. This is useful when you want
-to overwrite time-critical hooks only temporarily.
+this extension, replacing any hook previously installed via C<enable> in
+this extension.
+
+This is useful when you want to overwrite time-critical hooks only
+temporarily.
 
 To install additional callbacks for the same hook, you can use the C<on>
 method of the C<urxvt::term> class.
@@ -911,15 +967,24 @@ sub on {
    bless \%disable, "urxvt::extension::on_disable"
 }
 
+=item $self->bind_action ($hotkey, $action)
+
 =item $self->x_resource ($pattern)
 
 =item $self->x_resource_boolean ($pattern)
 
-These methods support an additional C<%> prefix when called on an
-extension object - see the description of these methods in the
-C<urxvt::term> class for details.
+These methods support an additional C<%> prefix for C<$action> or
+C<$pattern> when called on an extension object, compared to the
+C<urxvt::term> methods of the same name - see the description of these
+methods in the C<urxvt::term> class for details.
 
 =cut
+
+sub bind_action {
+   my ($self, $hotkey, $action) = @_;
+   $action =~ s/^%:/$_[0]{_name}:/;
+   $self->{term}->bind_action ($hotkey, $action)
+}
 
 sub x_resource {
    my ($self, $name) = @_;
@@ -1064,33 +1129,48 @@ sub perl_libdirs {
       "$LIBDIR/perl"
 }
 
-sub scan_meta {
+# scan for available extensions and collect their metadata
+sub scan_extensions {
    my ($self) = @_;
-   my @libdirs = perl_libdirs $self;
 
-   return if $self->{meta_libdirs} eq join "\x00", @libdirs;
+   return if exists $self->{meta};
 
-   my %meta;
+   my @urxvtdirs = perl_libdirs $self;
+#   my @cpandirs = grep -d, map "$_/URxvt/Ext", @INC;
 
-   $self->{meta_libdirs} = join "\x00", @libdirs;
-   $self->{meta}         = \%meta;
+   $self->{meta} = \my %meta;
 
-   for my $dir (reverse @libdirs) {
+   # first gather extensions
+
+   my $gather = sub {
+      my ($dir, $core) = @_;
+
       opendir my $fh, $dir
-         or next;
+         or return;
+
       for my $ext (readdir $fh) {
          $ext !~ /^\./
-            and open my $fh, "<", "$dir/$ext"
             or next;
 
+         open my $fh, "<", "$dir/$ext"
+            or next;
+
+         -f $fh
+            or next;
+
+         $ext =~ s/\.uext$// or $core
+            or next;
+
+         my %ext = (dir => $dir);
+
          while (<$fh>) {
-            if (/^#:META:X_RESOURCE:(.*)/) {
+            if (/^#:META:(?:X_)?RESOURCE:(.*)/) {
                my ($pattern, $type, $desc) = split /:/, $1;
                $pattern =~ s/^%(\.|$)/$ext$1/g; # % in pattern == extension name
                if ($pattern =~ /[^a-zA-Z0-9\-\.]/) {
                   warn "$dir/$ext: meta resource '$pattern' contains illegal characters (not alphanumeric nor . nor *)\n";
                } else {
-                  $meta{resource}{$pattern} = [$ext, $type, $desc];
+                  $ext{resource}{$pattern} = [$ext, $type, $desc];
                }
             } elsif (/^\s*(?:#|$)/) {
                # skip other comments and empty lines
@@ -1098,7 +1178,21 @@ sub scan_meta {
                last; # stop parsing on first non-empty non-comment line
             }
          }
+
+         $meta{ext}{$ext} = \%ext;
       }
+   };
+
+#   $gather->($_, 0) for @cpandirs;
+   $gather->($_, 1) for @urxvtdirs;
+
+   # and now merge resources
+
+   $meta{resource} = \my %resource;
+
+   while (my ($k, $v) = each %{ $meta{ext} }) {
+      #TODO: should check for extensions overriding each other
+      %resource = (%resource, %{ $v->{resource} });
    }
 }
 
@@ -1224,15 +1318,15 @@ class name, i.e.  C<< $term->x_resource ("boldFont") >> should return the
 same value as used by this instance of rxvt-unicode. Returns C<undef> if no
 resource with that pattern exists.
 
-Extensions that define extra resource or command line arguments also need
-to call this method to access their values.
+Extensions that define extra resources also need to call this method
+to access their values.
 
 If the method is called on an extension object (basically, from an
 extension), then the special prefix C<%.> will be replaced by the name of
 the extension and a dot, and the lone string C<%> will be replaced by the
 extension name itself. This makes it possible to code extensions so you
-can rename them and get a new set of commandline switches and resources
-without having to change the actual code.
+can rename them and get a new set of resources without having to change
+the actual code.
 
 This method should only be called during the C<on_start> hook, as there is
 only one resource database per display, and later invocations might return
@@ -1254,17 +1348,25 @@ sub x_resource_boolean {
    $res =~ /^\s*(?:true|yes|on|1)\s*$/i ? 1 : defined $res && 0
 }
 
-=item $success = $term->parse_keysym ($key, $octets)
+=item $success = $term->bind_action ($key, $action)
 
-Adds a key binding exactly as specified via a resource. See the
+Adds a key binding exactly as specified via a C<keysym> resource. See the
 C<keysym> resource in the urxvt(1) manpage.
 
-=item $term->register_command ($keysym, $modifiermask, $string)
+To add default bindings for actions, an extension should call C<<
+->bind_action >> in its C<init> hook for every such binding. Doing it
+in the C<init> hook allows users to override or remove the binding
+again.
 
-Adds a key binding. This is a lower level api compared to
-C<parse_keysym>, as it expects a parsed key description, and can be
-used only inside either the C<on_init> hook, to add a binding, or the
-C<on_register_command> hook, to modify a parsed binding.
+Example: the C<searchable-scrollback> by default binds itself
+on C<Meta-s>, using C<< $self->bind_action >>, which calls C<<
+$term->bind_action >>.
+
+   sub init {
+      my ($self) = @_;
+
+      $self->bind_action ("M-s" => "%:start");
+   }
 
 =item $rend = $term->rstyle ([$new_rstyle])
 
@@ -1432,8 +1534,9 @@ Ring the bell!
 
 Write the given text string to the screen, as if output by the application
 running inside the terminal. It may not contain command sequences (escape
-codes), but is free to use line feeds, carriage returns and tabs. The
-string is a normal text string, not in locale-dependent encoding.
+codes - see C<cmd_parse> for that), but is free to use line feeds,
+carriage returns and tabs. The string is a normal text string, not in
+locale-dependent encoding.
 
 Normally its not a good idea to use this function, as programs might be
 confused by changes in cursor position or scrolling. Its useful inside a
@@ -1451,9 +1554,18 @@ locale-specific encoding of the terminal and can contain command sequences
 
 =item $term->tt_write ($octets)
 
-Write the octets given in C<$octets> to the tty (i.e. as program input). To
-pass characters instead of octets, you should convert your strings first
-to the locale-specific encoding using C<< $term->locale_encode >>.
+Write the octets given in C<$octets> to the tty (i.e. as user input
+to the program, see C<cmd_parse> for the opposite direction). To pass
+characters instead of octets, you should convert your strings first to the
+locale-specific encoding using C<< $term->locale_encode >>.
+
+=item $term->tt_write_user_input ($octets)
+
+Like C<tt_write>, but should be used when writing strings in response to
+the user pressing a key, to invoke the additional actions requested by
+the user for that case (C<tt_write> doesn't do that).
+
+The typical use case would be inside C<on_action> hooks.
 
 =item $term->tt_paste ($octets)
 

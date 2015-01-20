@@ -527,8 +527,8 @@ dnl# --------------------------------------------------------------------------
 
 dnl# this is a really hack test for some basic Xlocale stuff
 save_LIBS=$LIBS
-save_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $X_CFLAGS"
+save_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS $X_CFLAGS"
 LIBS="$LIBS $X_LIBS $X_EXTRA_LIBS -lX11"
 if test x$support_xim = xyes; then
   AC_CACHE_CHECK(for working Xlocale, rxvt_cv_func_xlocale,
@@ -570,7 +570,7 @@ if test x$rxvt_cv_func_xsetlocale = xyes; then
   AC_DEFINE(HAVE_XSETLOCALE, 1, Define if setlocale (defined to Xsetlocale) works)
 fi
 LIBS=$save_LIBS
-CFLAGS=$save_CFLAGS
+CXXFLAGS=$save_CXXFLAGS
 
 AC_CACHE_CHECK(for working nl_langinfo, rxvt_cv_func_nl_langinfo,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <langinfo.h>]], [[nl_langinfo(CODESET);]])],[rxvt_cv_func_nl_langinfo=yes],[rxvt_cv_func_nl_langinfo=no])])
@@ -637,11 +637,23 @@ if test x$support_xft = xyes && test x$rxvt_have_xrender = xyes; then
 fi
 
 if test x$support_image = xyes && test x$rxvt_have_xrender = xyes; then
-  LIBS="$LIBS -lm"
-  AC_DEFINE(XRENDER, 1, Define to enable xrender support)
+  AC_MSG_CHECKING(for Render >= 0.11)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <X11/extensions/Xrender.h>
+#if RENDER_MAJOR == 0 && RENDER_MINOR <= 10
+error
+#endif
+]])],[],[support_image=no])
+  if test x$support_image = xyes; then
+    AC_MSG_RESULT(ok)
+    LIBS="$LIBS -lm"
+    AC_DEFINE(XRENDER, 1, Define to enable xrender support)
 
-  if test x$support_inheritpixmap = xyes; then
-    AC_DEFINE(ENABLE_TRANSPARENCY, 1, Define if you want your background to use the parent window background)
+    if test x$support_inheritpixmap = xyes; then
+      AC_DEFINE(ENABLE_TRANSPARENCY, 1, Define if you want your background to use the parent window background)
+    fi
+  else
+    AC_MSG_RESULT(no)
   fi
 fi
 

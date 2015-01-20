@@ -6,7 +6,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -936,7 +936,8 @@ rxvt_font_x11::load (const rxvt_fontprop &prop, bool force_prop)
       if (!has_char (*t, &prop, careful))
         continue;
 
-      XChar2b ch = { *t >> 8, *t };
+      // the casts are needed in C++11 (see 8.5.1)
+      XChar2b ch = { (unsigned char)(*t >> 8), (unsigned char)*t };
 
       XCharStruct g;
       int dir_ret, asc_ret, des_ret;
@@ -1046,7 +1047,8 @@ rxvt_font_x11::draw (rxvt_drawable &d, int x, int y,
 
   bool slow = this->slow
               || width  != term->fwidth
-              || height != term->fheight;
+              || height != term->fheight
+              || ascent != f->ascent;
 
   int base = ascent; // sorry, incorrect: term->fbase;
 

@@ -1,8 +1,8 @@
 #! perl
 
-#:META:X_RESOURCE:%.expr:string:background expression
-#:META:X_RESOURCE:%.border:boolean:respect the terminal border
-#:META:X_RESOURCE:%.interval:seconds:minimum time between updates
+#:META:RESOURCE:%.expr:string:background expression
+#:META:RESOURCE:%.border:boolean:respect the terminal border
+#:META:RESOURCE:%.interval:seconds:minimum time between updates
 
 =head1 NAME
 
@@ -1188,7 +1188,7 @@ sub recalculate {
    # set background pixmap
 
    $self->set_background ($img, $self->{border});
-   $self->scr_recolour (0);
+   $self->scr_recolor (0);
    $self->want_refresh;
 }
 

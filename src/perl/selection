@@ -1,6 +1,6 @@
 #! perl
 
-#:META:X_RESOURCE:%.pattern-0:string:first selection pattern
+#:META:RESOURCE:%.pattern-0:string:first selection pattern
 
 =head1 NAME
 
@@ -41,15 +41,17 @@ end):
 You can look at the source of the selection extension to see more
 interesting uses, such as parsing a line from beginning to end.
 
-This extension also offers following bindable keyboard commands:
+This extension also offers the following actions:
 
 =over 4
 
 =item rot13
 
-Rot-13 the selection when activated. Used via keyboard trigger:
+Rot-13 the selection when activated.
 
-   URxvt.keysym.C-M-r: perl:selection:rot13
+Example:
+
+   URxvt.keysym.C-M-r: selection:rot13
 
 =back
 
@@ -59,6 +61,15 @@ sub on_user_command {
    my ($self, $cmd) = @_;
 
    $cmd eq "selection:rot13"
+      and $self->selection (map { y/A-Za-z/N-ZA-Mn-za-m/; $_ } $self->selection);
+
+   ()
+}
+
+sub on_action {
+   my ($self, $action) = @_;
+
+   $action eq "rot13"
       and $self->selection (map { y/A-Za-z/N-ZA-Mn-za-m/; $_ } $self->selection);
 
    ()

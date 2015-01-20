@@ -11,7 +11,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -98,8 +98,10 @@ optList[] = {
               SWCH ("iconic", Opt_iconic, 0, "start iconic"),
               SWCH ("ic", Opt_iconic, 0, NULL),	/* short form */
               STRG (Rs_chdir, "chdir", "cd", "string", "start shell in this directory"),
+              SWCH ("dockapp", Opt_dockapp, 0, "start as dockapp"),
               BOOL (Rs_reverseVideo, "reverseVideo", "rv", Opt_reverseVideo, 0, "reverse video"),
               BOOL (Rs_loginShell, "loginShell", "ls", Opt_loginShell, 0, "login shell"),
+              STRG (Rs_multiClickTime, "multiClickTime", "mc", "number", "maximum time (in ms) between multi-click selections"),
               BOOL (Rs_jumpScroll, "jumpScroll", "j", Opt_jumpScroll, 0, "jump scrolling"),
               BOOL (Rs_skipScroll, "skipScroll", "ss", Opt_skipScroll, 0, "skip scrolling"),
               BOOL (Rs_pastableTabs, "pastableTabs", "ptab", Opt_pastableTabs, 0, "tab characters are pastable"),
@@ -629,6 +631,12 @@ rxvt_term::get_options (int argc, const char *const *argv)
 /*----------------------------------------------------------------------*/
 
 # ifdef KEYSYM_RESOURCE
+static void
+rxvt_define_key (rxvt_term *term, const char *k, const char *v)
+{
+  term->bind_action (k, v);
+}
+
 /*
  * Define key from XrmEnumerateDatabase.
  *   quarks will be something like
@@ -636,21 +644,27 @@ rxvt_term::get_options (int argc, const char *const *argv)
  *   value will be a string
  */
 static int
-rxvt_define_key (XrmDatabase *database ecb_unused,
-                 XrmBindingList bindings ecb_unused,
-                 XrmQuarkList quarks,
-                 XrmRepresentation *type ecb_unused,
-                 XrmValue *value,
-                 XPointer closure)
+rxvt_keysym_enumerate_helper (
+   XrmDatabase *database ecb_unused,
+   XrmBindingList bindings ecb_unused,
+   XrmQuarkList quarks,
+   XrmRepresentation *type ecb_unused,
+   XrmValue *value,
+   XPointer closure
+)
 {
-  rxvt_term *term = (rxvt_term *)closure;
   int last;
 
   for (last = 0; quarks[last] != NULLQUARK; last++)	/* look for last quark in list */
     ;
 
-  last--;
-  term->parse_keysym (XrmQuarkToString (quarks[last]), (char *)value->addr);
+  rxvt_term *term = (rxvt_term *)(((void **)closure)[0]);
+  void (*cb)(rxvt_term *, const char *, const char *)
+     = (void (*)(rxvt_term *, const char *, const char *))
+          (((void **)closure)[1]);
+
+  cb (term, XrmQuarkToString (quarks[last - 1]), (char *)value->addr);
+
   return False;
 }
 
@@ -695,11 +709,12 @@ static const keysym_vocabulary_t keysym_vocabulary[] =
 };
 
 int
-rxvt_term::parse_keysym (const char *str, const char *arg)
+rxvt_term::parse_keysym (const char *str, unsigned int &state)
 {
   int sym;
-  unsigned int state = 0;
   const char *key = strrchr (str, '-');
+
+  state = 0;
 
   if (!key)
     key = str;
@@ -707,7 +722,7 @@ rxvt_term::parse_keysym (const char *str, const char *arg)
     key++;
 
   // string or key is empty
-  if (*arg == '\0' || *key == '\0')
+  if (*key == '\0')
     return -1;
 
   // parse modifiers
@@ -742,9 +757,21 @@ rxvt_term::parse_keysym (const char *str, const char *arg)
         return -1;
     }
 
+  return sym;
+}
+
+int
+rxvt_term::bind_action (const char *str, const char *arg)
+{
+  int sym;
+  unsigned int state;
+
+  if (*arg == '\0' || (sym = parse_keysym (str, state)) == -1)
+    return -1;
+
   wchar_t *ws = rxvt_mbstowcs (arg);
   if (!HOOK_INVOKE ((this, HOOK_REGISTER_COMMAND, DT_INT, sym, DT_INT, state, DT_WCS_LEN, ws, wcslen (ws), DT_END)))
-    keyboard->register_user_translation (sym, state, ws);
+    keyboard->register_action (sym, state, ws);
 
   free (ws);
   return 1;
@@ -833,13 +860,18 @@ rxvt_term::extract_resources ()
 }
 
 void
-rxvt_term::extract_keysym_resources ()
+rxvt_term::enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, const char *))
 {
 #ifndef NO_RESOURCES
   /*
    * [R5 or later]: enumerate the resource database
    */
 #  ifdef KEYSYM_RESOURCE
+  void *closure[2] = {
+    (void *)this,
+    (void *)cb,
+  };
+
   XrmDatabase database = XrmGetDatabase (dpy);
   XrmName name_prefix[3];
   XrmClass class_prefix[3];
@@ -852,16 +884,23 @@ rxvt_term::extract_keysym_resources ()
   class_prefix[2] = NULLQUARK;
   /* XXX: Need to check sizeof (rxvt_t) == sizeof (XPointer) */
   XrmEnumerateDatabase (database, name_prefix, class_prefix,
-                        XrmEnumOneLevel, rxvt_define_key, (XPointer)this);
+                        XrmEnumOneLevel, rxvt_keysym_enumerate_helper, (XPointer)closure);
 #   ifdef RESFALLBACK
   name_prefix[0] = class_prefix[0] = XrmStringToName (RESFALLBACK);
   /* XXX: Need to check sizeof (rxvt_t) == sizeof (XPointer) */
   XrmEnumerateDatabase (database, name_prefix, class_prefix,
-                        XrmEnumOneLevel, rxvt_define_key, (XPointer)this);
+                        XrmEnumOneLevel, rxvt_keysym_enumerate_helper, (XPointer)closure);
 #   endif
 #  endif
 
 #endif /* NO_RESOURCES */
 }
 
+void
+rxvt_term::extract_keysym_resources ()
+{
+  enumerate_keysym_resources (rxvt_define_key);
+}
+
 /*----------------------- end-of-file (C source) -----------------------*/
+

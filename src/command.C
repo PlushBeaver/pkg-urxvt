@@ -32,7 +32,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -212,7 +212,7 @@ rxvt_term::iso14755_51 (unicode_t ch, rend_t r, int x, int y, int y2)
 
   if (y >= 0)
     {
-      y = (y >= nrow - len - 4 && x < width + 2) ? 0 : -1;
+      y = (y >= nrow - len - 5 && x < width + 2) ? 0 : -1;
       x = 0;
     }
 
@@ -317,13 +317,8 @@ translate_keypad (KeySym keysym, bool kp)
     XK_KP_8, // XK_KP_Up
     XK_KP_6, // XK_KP_Right
     XK_KP_2, // XK_KP_Down
-# ifndef UNSHIFTED_SCROLLKEYS
     XK_KP_9, // XK_KP_Prior
     XK_KP_3, // XK_KP_Next
-# else
-    XK_Prior,
-    XK_Next,
-# endif
     XK_KP_1, // XK_KP_End
     XK_KP_5, // XK_KP_Begin
   };
@@ -378,7 +373,6 @@ map_function_key (KeySym keysym)
         case XK_Select:
           param = 4;
           break;
-#ifndef UNSHIFTED_SCROLLKEYS
         case XK_Prior:
           param = 5;
           break;
@@ -391,7 +385,6 @@ map_function_key (KeySym keysym)
         case XK_End:
           param = 8;
           break;
-#endif
         case XK_Help:
           param = 28;
           break;
@@ -415,9 +408,9 @@ void ecb_cold
 rxvt_term::key_press (XKeyEvent &ev)
 {
   int ctrl, meta, shft, len;
-  KeySym keysym;
-  int valid_keysym;
-  char kbuf[KBUFSZ];
+  KeySym keysym = NoSymbol;
+  char rkbuf[KBUFSZ + 1];
+  char *kbuf = rkbuf + 1;
 
 #if ISO_14755
   if (iso14755buf & ISO_14755_52)
@@ -484,188 +477,23 @@ rxvt_term::key_press (XKeyEvent &ev)
           else
             len = 0;
         }
-
-      valid_keysym = status_return == XLookupKeySym
-                     || status_return == XLookupBoth;
     }
   else
 #endif
     {
       len = XLookupString (&ev, kbuf, KBUFSZ, &keysym, &compose);
-      valid_keysym = keysym != NoSymbol;
     }
 
-  if (valid_keysym)
+  if (keysym != NoSymbol)
     {
-#ifdef KEYSYM_RESOURCE
-      if (keyboard->dispatch (this, keysym, ev.state))
-        return;
-#endif
+      KeySym orig_keysym = keysym;
 
-      if (saveLines)
+      /* Shift + F1 - F10 generates F11 - F20 */
+      if (shft && keysym >= XK_F1 && keysym <= XK_F10)
         {
-#ifdef UNSHIFTED_SCROLLKEYS
-          if (!ctrl && !meta)
-#else
-          if (IS_SCROLL_MOD)
-#endif
-            {
-              int lnsppg;
-
-#ifdef PAGING_CONTEXT_LINES
-              lnsppg = nrow - PAGING_CONTEXT_LINES;
-#else
-              lnsppg = nrow * 4 / 5;
-#endif
-              max_it (lnsppg, 1);
-
-              if (keysym == XK_Prior)
-                {
-                  scr_page (lnsppg);
-                  return;
-                }
-              else if (keysym == XK_Next)
-                {
-                  scr_page (-lnsppg);
-                  return;
-                }
-            }
-#ifdef SCROLL_ON_UPDOWN_KEYS
-          if (IS_SCROLL_MOD)
-            {
-              if (keysym == XK_Up)
-                {
-                  scr_page (1);
-                  return;
-                }
-              else if (keysym == XK_Down)
-                {
-                  scr_page (-1);
-                  return;
-                }
-            }
-#endif
-#ifdef SCROLL_ON_HOMEEND_KEYS
-          if (IS_SCROLL_MOD)
-            {
-              if (keysym == XK_Home)
-                {
-                  scr_changeview (top_row);
-                  return;
-                }
-              else if (keysym == XK_End)
-                {
-                  scr_changeview (0);
-                  return;
-                }
-            }
-#endif
+          keysym += (XK_F11 - XK_F1);
+          shft = 0;	/* turn off Shift */
         }
-
-      if (shft)
-        {
-          /* Shift + F1 - F10 generates F11 - F20 */
-          if (keysym >= XK_F1 && keysym <= XK_F10)
-            {
-              keysym += (XK_F11 - XK_F1);
-              shft = 0;	/* turn off Shift */
-            }
-          else if (!ctrl && !meta && (priv_modes & PrivMode_ShiftKeys))
-            {
-              switch (keysym)
-                {
-                    /* normal XTerm key bindings */
-                  case XK_Insert:	/* Shift+Insert = paste mouse selection */
-                    selection_request (ev.time);
-                    return;
-#if TODO
-                    /* rxvt extras */
-                  case XK_KP_Add:	/* Shift+KP_Add = bigger font */
-                    return;
-                  case XK_KP_Subtract:	/* Shift+KP_Subtract = smaller font */
-                    return;
-#endif
-                }
-            }
-        }
-
-      if (ctrl && meta && (keysym == XK_c || keysym == XK_v))
-        {
-          if (keysym == XK_v)
-            selection_request (ev.time, Sel_Clipboard);
-          else if (selection.len > 0)
-            {
-              free (selection.clip_text);
-              selection.clip_text = rxvt_wcsdup (selection.text, selection.len);
-              selection.clip_len = selection.len;
-              selection_grab (CurrentTime, true);
-            }
-
-          return;
-        }
-
-#if ENABLE_FRILLS || ISO_14755
-      // ISO 14755 support
-      if (iso14755buf & (ISO_14755_STARTED | ISO_14755_51))
-        {
-          int hv;
-
-          if (iso14755buf & ISO_14755_51
-              && (keysym == XK_space || keysym == XK_KP_Space
-                  || keysym == XK_Return || keysym == XK_KP_Enter))
-            {
-              commit_iso14755 ();
-              iso14755buf = ISO_14755_51;
-# if ISO_14755
-              iso14755_51 (0);
-# endif
-              return;
-            }
-          else if (keysym == XK_BackSpace)
-            {
-              iso14755buf = ((iso14755buf & ISO_14755_MASK) >> 4) | ISO_14755_51;
-# if ISO_14755
-              iso14755_51 (iso14755buf & ISO_14755_MASK);
-# endif
-              return;
-            }
-          else if ((hv = hex_keyval (ev)) >= 0)
-            {
-              iso14755buf = ((iso14755buf << 4) & ISO_14755_MASK)
-                          | hv | ISO_14755_51;
-# if ISO_14755
-              iso14755_51 (iso14755buf & ISO_14755_MASK);
-# endif
-              return;
-            }
-          else
-            {
-# if ISO_14755
-              scr_overlay_off ();
-# endif
-              iso14755buf = 0;
-            }
-        }
-      else if (option (Opt_iso14755) &&
-               ((ctrl && (keysym == XK_Shift_L || keysym == XK_Shift_R))
-                || (shft && (keysym == XK_Control_L || keysym == XK_Control_R))))
-        if (!(iso14755buf & ISO_14755_STARTED))
-          {
-            iso14755buf |= ISO_14755_STARTED;
-# if ISO_14755
-            scr_overlay_new (0, -1, sizeof ("ISO 14755 mode") - 1, 1);
-            scr_overlay_set (0, 0, "ISO 14755 mode");
-# endif
-          }
-#endif
-
-#ifdef PRINTPIPE
-      if (keysym == XK_Print)
-        {
-          scr_printscreen (ctrl | shft);
-          return;
-        }
-#endif
 
       if (keysym >= 0xFF00 && keysym <= 0xFFFF)
         {
@@ -850,39 +678,199 @@ rxvt_term::key_press (XKeyEvent &ev)
 
               for (ch = kbuf; ch < kbuf + len; ch++)
                 *ch |= 0x80;
-
-              meta = 0;
             }
 #endif
           /* nil */ ;
         }
+
+      keysym = orig_keysym;
     }
 
-  if (HOOK_INVOKE ((this, HOOK_KEY_PRESS, DT_XEVENT, &ev, DT_INT, keysym, DT_STR_LEN, kbuf, len, DT_END)))
-    return;
-
-  if (len <= 0)
-    return;			/* not mapped */
-
-  if (option (Opt_scrollTtyKeypress))
-    if (view_start)
-      {
-        view_start = 0;
-        want_refresh = 1;
-      }
-
   /* escape prefix */
-  if (meta
+  if (len && meta
 #ifdef META8_OPTION
       && meta_char == C0_ESC
 #endif
      )
     {
-      const char ch = C0_ESC;
-      tt_write (&ch, 1);
+      *--kbuf = C0_ESC;
+      len++;
     }
 
-  tt_write (kbuf, (unsigned int)len);
+  if (HOOK_INVOKE ((this, HOOK_KEY_PRESS, DT_XEVENT, &ev, DT_INT, keysym, DT_STR_LEN, kbuf, len, DT_END)))
+    return;
+
+  if (keysym != NoSymbol)
+    {
+#ifdef KEYSYM_RESOURCE
+      if (keyboard->dispatch (this, keysym, ev.state, kbuf, len))
+        return;
+#endif
+
+      if (saveLines)
+        {
+#ifdef UNSHIFTED_SCROLLKEYS
+          if (!ctrl && !meta)
+#else
+          if (IS_SCROLL_MOD)
+#endif
+            {
+              int lnsppg;
+
+#ifdef PAGING_CONTEXT_LINES
+              lnsppg = nrow - PAGING_CONTEXT_LINES;
+#else
+              lnsppg = nrow * 4 / 5;
+#endif
+              max_it (lnsppg, 1);
+
+              if (keysym == XK_Prior)
+                {
+                  scr_page (lnsppg);
+                  return;
+                }
+              else if (keysym == XK_Next)
+                {
+                  scr_page (-lnsppg);
+                  return;
+                }
+            }
+#ifdef SCROLL_ON_UPDOWN_KEYS
+          if (IS_SCROLL_MOD)
+            {
+              if (keysym == XK_Up)
+                {
+                  scr_page (1);
+                  return;
+                }
+              else if (keysym == XK_Down)
+                {
+                  scr_page (-1);
+                  return;
+                }
+            }
+#endif
+#ifdef SCROLL_ON_HOMEEND_KEYS
+          if (IS_SCROLL_MOD)
+            {
+              if (keysym == XK_Home)
+                {
+                  scr_changeview (top_row);
+                  return;
+                }
+              else if (keysym == XK_End)
+                {
+                  scr_changeview (0);
+                  return;
+                }
+            }
+#endif
+        }
+
+      if (shft)
+        {
+          if (!ctrl && !meta && (priv_modes & PrivMode_ShiftKeys))
+            {
+              switch (keysym)
+                {
+                    /* normal XTerm key bindings */
+                  case XK_Insert:	/* Shift+Insert = paste mouse selection */
+                    selection_request (ev.time);
+                    return;
+#if TODO
+                    /* rxvt extras */
+                  case XK_KP_Add:	/* Shift+KP_Add = bigger font */
+                    return;
+                  case XK_KP_Subtract:	/* Shift+KP_Subtract = smaller font */
+                    return;
+#endif
+                }
+            }
+        }
+
+      if (ctrl && meta && (keysym == XK_c || keysym == XK_v))
+        {
+          if (keysym == XK_v)
+            selection_request (ev.time, Sel_Clipboard);
+          else if (selection.len > 0)
+            {
+              free (selection.clip_text);
+              selection.clip_text = rxvt_wcsdup (selection.text, selection.len);
+              selection.clip_len = selection.len;
+              selection_grab (CurrentTime, true);
+            }
+
+          return;
+        }
+
+#if ENABLE_FRILLS || ISO_14755
+      // ISO 14755 support
+      if (iso14755buf & (ISO_14755_STARTED | ISO_14755_51))
+        {
+          int hv;
+
+          if (iso14755buf & ISO_14755_51
+              && (keysym == XK_space || keysym == XK_KP_Space
+                  || keysym == XK_Return || keysym == XK_KP_Enter))
+            {
+              commit_iso14755 ();
+              iso14755buf = ISO_14755_51;
+# if ISO_14755
+              iso14755_51 (0);
+# endif
+              return;
+            }
+          else if (keysym == XK_BackSpace)
+            {
+              iso14755buf = ((iso14755buf & ISO_14755_MASK) >> 4) | ISO_14755_51;
+# if ISO_14755
+              iso14755_51 (iso14755buf & ISO_14755_MASK);
+# endif
+              return;
+            }
+          else if ((hv = hex_keyval (ev)) >= 0)
+            {
+              iso14755buf = ((iso14755buf << 4) & ISO_14755_MASK)
+                          | hv | ISO_14755_51;
+# if ISO_14755
+              iso14755_51 (iso14755buf & ISO_14755_MASK);
+# endif
+              return;
+            }
+          else
+            {
+# if ISO_14755
+              scr_overlay_off ();
+# endif
+              iso14755buf = 0;
+            }
+        }
+      else if (option (Opt_iso14755) &&
+               ((ctrl && (keysym == XK_Shift_L || keysym == XK_Shift_R))
+                || (shft && (keysym == XK_Control_L || keysym == XK_Control_R))))
+        if (!(iso14755buf & ISO_14755_STARTED))
+          {
+            iso14755buf |= ISO_14755_STARTED;
+# if ISO_14755
+            scr_overlay_new (0, -1, sizeof ("ISO 14755 mode") - 1, 1);
+            scr_overlay_set (0, 0, "ISO 14755 mode");
+# endif
+          }
+#endif
+
+#ifdef PRINTPIPE
+      if (keysym == XK_Print)
+        {
+          scr_printscreen (ctrl | shft);
+          return;
+        }
+#endif
+    }
+
+  if (len <= 0)
+    return;			/* not mapped */
+
+  tt_write_user_input (kbuf, (unsigned int)len);
 }
 
 void ecb_cold
@@ -1054,7 +1042,7 @@ rxvt_term::cursor_blink_reset ()
       want_refresh = 1;
     }
 
-  if (option (Opt_cursorBlink))
+  if (option (Opt_cursorBlink) || (priv_modes & PrivMode_BlinkingCursor))
     cursor_blink_ev.again ();
   else
     cursor_blink_ev.stop ();
@@ -1253,7 +1241,7 @@ void ecb_cold
 rxvt_term::pointer_unblank ()
 {
   XDefineCursor (dpy, vt, TermWin_cursor);
-  recolour_cursor ();
+  recolor_cursor ();
 
 #ifdef POINTER_BLANK
   hidden_pointer = 0;
@@ -1793,7 +1781,7 @@ rxvt_term::focus_in ()
       if (rs[Rs_fade])
         {
           pix_colors = pix_colors_focused;
-          scr_recolour ();
+          scr_recolor ();
         }
 #endif
 #if ENABLE_FRILLS
@@ -1840,7 +1828,7 @@ rxvt_term::focus_out ()
       if (rs[Rs_fade])
         {
           pix_colors = pix_colors_unfocused;
-          scr_recolour ();
+          scr_recolor ();
         }
 #endif
 
@@ -1849,11 +1837,14 @@ rxvt_term::focus_out ()
 }
 
 void ecb_cold
-rxvt_term::update_fade_color (unsigned int idx)
+rxvt_term::update_fade_color (unsigned int idx, bool first_time)
 {
 #if OFF_FOCUS_FADING
   if (rs[Rs_fade])
     {
+      if (!first_time)
+        pix_colors_focused [idx].free (this);
+
       rgba c;
       pix_colors [Color_fade].get (c);
       pix_colors_focused [idx].fade (this, atoi (rs[Rs_fade]), pix_colors_unfocused [idx], c);
@@ -1925,7 +1916,7 @@ rxvt_term::button_press (XButtonEvent &ev)
         }
 #endif
 
-      clickintime = ev.time - MEvent.time < MULTICLICK_TIME;
+      clickintime = ev.time - MEvent.time < multiClickTime;
 
       if (reportmode)
         {
@@ -2185,7 +2176,7 @@ rxvt_term::button_release (XButtonEvent &ev)
           if (MEvent.button != AnyButton
               && (ev.button != MEvent.button
                   || (ev.time - MEvent.time
-                      > MULTICLICK_TIME / 2)))
+                      > multiClickTime / 2)))
             {
               MEvent.clicks = 0;
               MEvent.button = AnyButton;
@@ -2585,13 +2576,13 @@ rxvt_term::process_nonprinting (unicode_t ch)
 
 #ifdef EIGHT_BIT_CONTROLS
       // 8-bit controls
-      case 0x90: 	/* DCS */
+      case 0x90:		/* DCS */
         process_dcs_seq ();
         break;
-      case 0x9b: 	/* CSI */
+      case 0x9b:		/* CSI */
         process_csi_seq ();
         break;
-      case 0x9d: 	/* OSC */
+      case 0x9d:		/* OSC */
         process_osc_seq ();
         break;
 #endif
@@ -3106,7 +3097,7 @@ rxvt_term::process_csi_seq ()
           priv_modes |= PrivMode_LFNL;
         break;
 
-      case CSI_71:		// DESCUSR: set cursor style
+      case CSI_71:		// DECSCUSR: set cursor style
         if (prev_ch == ' ')
           set_cursor_style (arg[0]);
         break;
@@ -3694,6 +3685,7 @@ rxvt_term::process_terminal_mode (int mode, int priv ecb_unused, unsigned int na
                   { 7, PrivMode_Autowrap },     // DECAWM
                  // 8, auto-repeat keys         // DECARM
                   { 9, PrivMode_MouseX10 },
+                  { 12, PrivMode_BlinkingCursor },
                  // 18 end FF to printer after print screen
                  // 19 Print screen prints full screen/scroll region
                   { 25, PrivMode_VisibleCursor }, // DECTCEM cnorm/cvvis/civis
@@ -3812,6 +3804,11 @@ rxvt_term::process_terminal_mode (int mode, int priv ecb_unused, unsigned int na
               scr_touch (true);
               break;
 #endif
+#ifdef CURSOR_BLINK
+            case 12:
+              cursor_blink_reset ();
+              break;
+#endif
             case 25:		/* visible/invisible cursor */
               scr_cursor_visible (state);
               break;
@@ -3926,22 +3923,22 @@ rxvt_term::process_sgr_mode (unsigned int nargs, const int *arg)
           case 21: // disable bold, faint, sometimes doubly underlined (iso 8613)
             rendset = 0, rendstyle = RS_Bold;
             break;
-          case 22: // normal intensity
+          case 22: // bold off (vt220)
             rendset = 0, rendstyle = RS_Bold;
             break;
           case 23: // disable italic
             rendset = 0, rendstyle = RS_Italic;
             break;
-          case 24:
+          case 24: // underline off (vt220)
             rendset = 0, rendstyle = RS_Uline;
             break;
-          case 25:
+          case 25: // blink off (vt220)
             rendset = 0, rendstyle = RS_Blink;
             break;
           case 26: // variable spacing (iso 8613)
             rendset = 0, rendstyle = RS_Blink;
             break;
-          case 27:
+          case 27: // reverse off (vt220)
             rendset = 0, rendstyle = RS_RVid;
             break;
           //case 28: // visible. NYI
@@ -4029,13 +4026,17 @@ rxvt_term::process_sgr_mode (unsigned int nargs, const int *arg)
 void
 rxvt_term::set_cursor_style (int style)
 {
-  if (!IN_RANGE_INC (style, 0, 4))
+  if (!IN_RANGE_INC (style, 0, 6))
     return;
 
-  set_option (Opt_cursorUnderline, style >= 3);
+  if (style == 0)
+    style = 1;
+
+  cursor_type = (style - 1) / 2;
+  set_option (Opt_cursorUnderline, cursor_type == 1);
 
 #ifdef CURSOR_BLINK
-  set_option (Opt_cursorBlink, !style || (style & 1));
+  set_option (Opt_cursorBlink, style & 1);
   cursor_blink_reset ();
 #endif
 
@@ -4043,7 +4044,10 @@ rxvt_term::set_cursor_style (int style)
 }
 /*}}} */
 
-/* ------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* Write data to the pty as typed by the user, pasted with the mouse,
+ * or generated by us in response to a query ESC sequence.
+ */
 
 /*
  * Send printf () formatted output to the command.
@@ -4061,11 +4065,22 @@ rxvt_term::tt_printf (const char *fmt,...)
   tt_write (buf, strlen (buf));
 }
 
-/* ---------------------------------------------------------------------- */
-/* Write data to the pty as typed by the user, pasted with the mouse,
- * or generated by us in response to a query ESC sequence.
- */
-static const unsigned int MAX_PTY_WRITE = 255; // minimum MAX_INPUT
+/* Write data to the pty as typed by the user. */
+void
+rxvt_term::tt_write_user_input (const char *data, unsigned int len)
+{
+  if (HOOK_INVOKE ((this, HOOK_TT_WRITE, DT_STR_LEN, data, len, DT_END)))
+    return;
+
+  if (option (Opt_scrollTtyKeypress))
+    if (view_start)
+      {
+        view_start = 0;
+        want_refresh = 1;
+      }
+
+  tt_write_ (data, len);
+}
 
 void
 rxvt_term::tt_write (const char *data, unsigned int len)
@@ -4073,6 +4088,14 @@ rxvt_term::tt_write (const char *data, unsigned int len)
   if (HOOK_INVOKE ((this, HOOK_TT_WRITE, DT_STR_LEN, data, len, DT_END)))
     return;
 
+  tt_write_ (data, len);
+}
+
+static const unsigned int MAX_PTY_WRITE = 255; // minimum MAX_INPUT
+
+void
+rxvt_term::tt_write_ (const char *data, unsigned int len)
+{
   if (pty->pty < 0)
     return;
 

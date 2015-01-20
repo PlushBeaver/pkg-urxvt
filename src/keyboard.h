@@ -8,7 +8,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -50,7 +50,7 @@ struct rxvt_term;
 struct keysym_t
 {
   enum keysym_type {
-    STRING, BUILTIN,
+    STRING, BUILTIN, BUILTIN_STRING,
   };
 
   KeySym      keysym;
@@ -68,9 +68,9 @@ public:
   keyboard_manager ();
   ~keyboard_manager ();
 
-  void register_user_translation (KeySym keysym, unsigned int state, const wchar_t *ws);
+  void register_action (KeySym keysym, unsigned int state, const wchar_t *ws);
   void register_done ();        // call this to make newly registered key bindings take effect
-  bool dispatch (rxvt_term *term, KeySym keysym, unsigned int state);
+  bool dispatch (rxvt_term *term, KeySym keysym, unsigned int state, const char *kbuf, int len);
 
 private:
   int find_keysym (KeySym keysym, unsigned int state);

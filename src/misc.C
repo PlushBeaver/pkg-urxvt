@@ -10,7 +10,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -25,6 +25,29 @@
 
 #include "../config.h"		/* NECESSARY */
 #include "rxvt.h"		/* NECESSARY */
+
+#include <new>
+
+// alas new/delete cannot be specified as inline in C++11 (see 17.6.4.6)
+void *
+operator new (size_t s)
+#if !ECB_CPP11
+  throw (std::bad_alloc)
+#endif
+{
+  return rxvt_malloc (s);
+}
+
+void
+operator delete (void *p)
+#if ECB_CPP11
+  noexcept
+#else
+  throw ()
+#endif
+{
+  free (p);
+}
 
 char *
 rxvt_wcstombs (const wchar_t *str, int len)
@@ -328,4 +351,14 @@ rxvt_realloc (void *ptr, size_t size)
     rxvt_fatal ("memory allocation failure. aborting.\n");
 
   return p;
+}
+
+KeySym
+rxvt_XKeycodeToKeysym (Display *dpy, KeyCode code, int index)
+{
+  int size;
+  KeySym *mapping = XGetKeyboardMapping (dpy, code, 1, &size);
+  KeySym keysym = IN_RANGE_EXC (index, 0, size) ? mapping[index] : NoSymbol;
+  XFree (mapping);
+  return keysym;
 }
