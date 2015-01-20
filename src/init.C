@@ -16,7 +16,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -662,6 +662,13 @@ rxvt_term::init_resources (int argc, const char *const *argv)
     pointerBlankDelay = 2;
 #endif
 
+  if (rs[Rs_multiClickTime] && (i = atoi (rs[Rs_multiClickTime])) >= 0)
+    multiClickTime = i;
+  else
+    multiClickTime = 500;
+
+  cursor_type = option (Opt_cursorUnderline) ? 1 : 0;
+
   /* no point having a scrollbar without having any scrollback! */
   if (!saveLines)
     set_option (Opt_scrollBar, 0);
@@ -743,6 +750,10 @@ rxvt_term::init (stringvec *argv, stringvec *envv)
   this->argv = argv;
   this->envv = envv;
 
+  env = new char *[this->envv->size ()];
+  for (int i = 0; i < this->envv->size (); i++)
+    env[i] = this->envv->at (i);
+
   init2 (argv->size () - 1, argv->begin ());
 }
 
@@ -770,7 +781,7 @@ rxvt_term::init2 (int argc, const char *const *argv)
 {
   SET_R (this);
   set_locale ("");
-  set_environ (envv); // a few things in X do not call setlocale :(
+  set_environ (env); // a few things in X do not call setlocale :(
 
   init_vars ();
 
@@ -947,7 +958,7 @@ rxvt_term::init_env ()
 void
 rxvt_term::set_locale (const char *locale)
 {
-  set_environ (envv);
+  set_environ (env);
 
   free (this->locale);
   this->locale = setlocale (LC_CTYPE, locale);
@@ -985,7 +996,7 @@ rxvt_term::set_locale (const char *locale)
 void
 rxvt_term::init_xlocale ()
 {
-  set_environ (envv);
+  set_environ (env);
 
 #if USE_XIM
   if (!locale)
@@ -1047,7 +1058,7 @@ rxvt_term::init_command (const char *const *argv)
 
 /*----------------------------------------------------------------------*/
 void
-rxvt_term::get_colours ()
+rxvt_term::get_colors ()
 {
   int i;
 
@@ -1055,61 +1066,9 @@ rxvt_term::get_colours ()
   pix_colors = pix_colors_focused;
 #endif
 
-  for (i = 0; i < (depth <= 2 ? 2 : NRS_COLORS); i++)
-    {
-      const char *name = rs[Rs_color + i];
-
-      if (!name)
-        continue;
-
-      rxvt_color xcol;
-
-      if (!set_color (xcol, name))
-        {
-#ifndef XTERM_REVERSE_VIDEO
-          if (i < 2 && option (Opt_reverseVideo))
-            name = def_colorName [1 - i];
-          else
-#endif
-            name = def_colorName [i];
-
-          if (!name)
-            continue;
-
-          if (!set_color (xcol, name))
-            {
-              switch (i)
-                {
-                  case Color_fg:
-                  case Color_bg:
-                    rxvt_warn ("unable to get foreground/background colour, continuing.\n");
-                    name = "";
-                    break;
-#ifndef NO_CURSORCOLOR
-                  case Color_cursor2:
-#endif
-                  case Color_pointer_fg:
-                    name = rs[Rs_color + Color_fg];
-                    xcol.set (this, name);
-                    break;
-                  default:
-                    name = rs[Rs_color + Color_bg];
-                    xcol.set (this, name);
-                    break;
-                }
-            }
-        }
-
-      pix_colors[i] = xcol;
-      rs[Rs_color + i] = name;
-    }
-
-  if (depth <= 2)
-    {
-      if (!rs[Rs_color + Color_pointer_fg]) alias_color (Color_pointer_fg, Color_fg);
-      if (!rs[Rs_color + Color_pointer_bg]) alias_color (Color_pointer_bg, Color_bg);
-      if (!rs[Rs_color + Color_border]    ) alias_color (Color_border,     Color_fg);
-    }
+  for (i = 0; i < NRS_COLORS; i++)
+    if (const char *name = rs[Rs_color + i])
+      set_color (pix_colors [i], name);
 
   /*
    * get scrollBar shadow colors
@@ -1118,35 +1077,25 @@ rxvt_term::get_colours ()
    * from the fvwm window manager.
    */
 #ifdef RXVT_SCROLLBAR
-  if (depth <= 2)
-    {
-      /* Monochrome */
-      alias_color (Color_scroll,       Color_fg);
-      alias_color (Color_topShadow,    Color_bg);
-      alias_color (Color_bottomShadow, Color_bg);
-    }
-  else
-    {
-      pix_colors [Color_scroll].fade (this, 50, pix_colors [Color_bottomShadow]);
+  pix_colors [Color_scroll].fade (this, 50, pix_colors [Color_bottomShadow]);
 
-      rgba cscroll;
-      pix_colors [Color_scroll].get (cscroll);
+  rgba cscroll;
+  pix_colors [Color_scroll].get (cscroll);
 
-      /* topShadowColor */
-      if (!pix_colors[Color_topShadow].set (this,
-                       rgba (
-                         min ((int)rgba::MAX_CC, max (cscroll.r / 5, cscroll.r) * 7 / 5),
-                         min ((int)rgba::MAX_CC, max (cscroll.g / 5, cscroll.g) * 7 / 5),
-                         min ((int)rgba::MAX_CC, max (cscroll.b / 5, cscroll.b) * 7 / 5),
-                         cscroll.a)
-                       ))
-        alias_color (Color_topShadow, Color_White);
-    }
+  /* topShadowColor */
+  if (!pix_colors[Color_topShadow].set (this,
+                   rgba (
+                     min ((int)rgba::MAX_CC, max (cscroll.r / 5, cscroll.r) * 7 / 5),
+                     min ((int)rgba::MAX_CC, max (cscroll.g / 5, cscroll.g) * 7 / 5),
+                     min ((int)rgba::MAX_CC, max (cscroll.b / 5, cscroll.b) * 7 / 5),
+                     cscroll.a)
+                   ))
+    alias_color (Color_topShadow, Color_White);
 #endif
 
 #ifdef OFF_FOCUS_FADING
-  for (i = 0; i < (depth <= 2 ? 2 : NRS_COLORS); i++)
-    update_fade_color (i);
+  for (i = 0; i < NRS_COLORS; i++)
+    update_fade_color (i, true);
 #endif
 }
 
@@ -1205,7 +1154,7 @@ rxvt_term::get_ourmods ()
           if (kc[k] == 0)
             break;
 
-          switch (XKeycodeToKeysym (dpy, kc[k], 0))
+          switch (rxvt_XKeycodeToKeysym (dpy, kc[k], 0))
             {
               case XK_Num_Lock:
                 ModNumLockMask = modmasks[i - 1];
@@ -1335,7 +1284,7 @@ rxvt_term::create_windows (int argc, const char *const *argv)
   dLocal (Display *, dpy);
 
   /* grab colors before netscape does */
-  get_colours ();
+  get_colors ();
 
   if (!set_fonts ())
     rxvt_fatal ("unable to load base fontset, please specify a valid one using -fn, aborting.\n");
@@ -1398,7 +1347,9 @@ rxvt_term::create_windows (int argc, const char *const *argv)
 
   wmHint.flags         = InputHint | StateHint | WindowGroupHint;
   wmHint.input         = True;
-  wmHint.initial_state = option (Opt_iconic) ? IconicState : NormalState;
+  wmHint.initial_state = option (Opt_iconic) ? IconicState
+                         : option (Opt_dockapp) ? WithdrawnState
+                         : NormalState;
   wmHint.window_group  = top;
 
   XmbSetWMProperties (dpy, top, NULL, NULL, (char **)argv, argc,
@@ -1496,7 +1447,7 @@ rxvt_term::create_windows (int argc, const char *const *argv)
 #endif
 
   pointer_unblank ();
-  scr_recolour ();
+  scr_recolor ();
 }
 
 /*----------------------------------------------------------------------*/

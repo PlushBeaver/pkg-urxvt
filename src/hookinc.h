@@ -24,6 +24,7 @@
   def (REFRESH_BEGIN)
   def (REFRESH_END)
 
+  def (ACTION)
   def (USER_COMMAND)
   def (REGISTER_COMMAND)
 

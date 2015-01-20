@@ -7,7 +7,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -93,10 +93,7 @@ bool rxvt_connection::recv (auto_str &data, int *len)
   if (len)
     *len = l;
 
-  data.reset ((char *)malloc (l + 1));
-
-  if (!data)
-    return false;
+  data.reset (new char[l + 1]);
 
   if (read (fd, data, l) != l)
     return false;

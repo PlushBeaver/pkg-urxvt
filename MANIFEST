@@ -158,11 +158,10 @@ src/perl/block-graphics-to-ascii
 src/perl/clipboard-osc
 src/perl/confirm-paste
 src/perl/digital-clock
+src/perl/eval
 src/perl/example-refresh-hooks
 src/perl/keysym-list
 src/perl/kuake
-src/perl/macosx-clipboard
-src/perl/macosx-clipboard-native
 src/perl/matcher
 src/perl/option-popup
 src/perl/overlay-osc

@@ -10,7 +10,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -148,7 +148,7 @@ void
 scrollBar_t::init_next ()
 {
   XGCValues       gcvalue;
-  XColor          xcol;
+  rxvt_color      color;
   Pixmap          stipple;
   unsigned long   light, dark;
 
@@ -162,20 +162,23 @@ scrollBar_t::init_next ()
   whiteGC = XCreateGC (term->dpy, win,
                        GCForeground | GCGraphicsExposures, &gcvalue);
 
-  xcol.red = 0xaeba;
-  xcol.green = 0xaaaa;
-  xcol.blue = 0xaeba;
-  xcol.pixel = term->pix_colors_focused[Color_scroll];
-  light = gcvalue.foreground = xcol.pixel;
+  light = term->pix_colors_focused[Color_scroll];
+#if 0
+  //color used by rxvt
+  if (color.set (term, rgba (0xaeba, 0xaaaa, 0xaeba)))
+    light = color;
+#endif
+  gcvalue.foreground = light;
   grayGC = XCreateGC (term->dpy, win,
                       GCForeground | GCGraphicsExposures, &gcvalue);
 
-  xcol.red = 0x51aa;
-  xcol.green = 0x5555;
-  xcol.blue = 0x5144;
-  //if (!rXAllocColor (&xcol, "dark gray"))//TODO//D//
-  xcol.pixel = term->pix_colors_focused[Color_Grey25];
-  dark = gcvalue.foreground = xcol.pixel;
+  dark = term->pix_colors_focused[Color_Grey25];
+#if 0
+  //color used by rxvt
+  if (color.set (term, rgba (0x51aa, 0x5555, 0x5144)))
+    dark = color;
+#endif
+  gcvalue.foreground = dark;
   darkGC = XCreateGC (term->dpy, win,
                      GCForeground | GCGraphicsExposures, &gcvalue);
 
@@ -187,8 +190,6 @@ scrollBar_t::init_next ()
   gcvalue.background = light;
   gcvalue.fill_style = FillOpaqueStippled;
   gcvalue.stipple = stipple;
-
-  /*    XSetWindowBackground (dpy, scrollBar.win, pix_colors_focused[Color_Red]); */
 
   stippleGC = XCreateGC (term->dpy, win,
                          GCForeground | GCBackground | GCStipple
@@ -239,17 +240,28 @@ scrollBar_t::show_next (int update)
     {
       init |= SB_STYLE_NEXT;
       init_next ();
+      last_has_sb = false;
     }
 
-  if (term->top_row == 0 || !update)
+  bool has_sb = term->top_row;
+  int stipple_height = height - SB_PADDING;
+
+  if (has_sb)
+      stipple_height -= SB_BUTTON_TOTAL_HEIGHT;
+  else
+      stipple_height -= SB_PADDING;
+
+  if (has_sb != last_has_sb || !update)
     {
+      last_has_sb = has_sb;
       XFillRectangle (term->dpy, win, grayGC, 0, 0,
                       SB_WIDTH_NEXT + 1, height);
       XDrawRectangle (term->dpy, win, blackGC, 0,
                       -SB_BORDER_WIDTH, SB_WIDTH_NEXT,
                       height + SB_BORDER_WIDTH);
       XFillRectangle (term->dpy, win, stippleGC,
-                      SB_LEFT_PADDING, 0, SB_BUTTON_WIDTH, height);
+                      SB_LEFT_PADDING, SB_PADDING,
+                      SB_BUTTON_WIDTH, stipple_height);
     }
 
   if (term->top_row)

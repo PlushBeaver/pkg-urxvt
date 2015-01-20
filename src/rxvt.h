@@ -178,22 +178,13 @@ void           * rxvt_malloc                      (size_t size);
 void           * rxvt_calloc                      (size_t number, size_t size);
 void           * rxvt_realloc                     (void *ptr, size_t size);
 
+KeySym rxvt_XKeycodeToKeysym (Display *dpy, KeyCode keycode, int index);
+
 /////////////////////////////////////////////////////////////////////////////
 
 // temporarily replace the process environment
 extern char **environ;
 extern char **rxvt_environ; // the original environ pointer
-
-static inline void
-set_environ (stringvec *envv)
-{
-#if ENABLE_PERL
-  assert (envv);
-#else
-  if (envv)
-#endif
-    environ = (char **)envv->begin ();
-}
 
 static inline void
 set_environ (char **envv)
@@ -652,6 +643,7 @@ enum {
 #define PrivMode_BracketPaste   (1UL<<22)
 #define PrivMode_ExtModeMouse   (1UL<<23) // xterm pseudo-utf-8 hack
 #define PrivMode_ExtMouseRight  (1UL<<24) // xterm pseudo-utf-8, but works in non-utf-8-locales
+#define PrivMode_BlinkingCursor (1UL<<25)
 
 #define PrivMode_mouse_report   (PrivMode_MouseX10|PrivMode_MouseX11|PrivMode_MouseBtnEvent|PrivMode_MouseAnyEvent)
 
@@ -747,13 +739,6 @@ typedef struct _mwmhints
 #define SET_STYLE(x,style)	(((x) & ~RS_styleMask) | ((style) << RS_styleShift))
 
 #define GET_ATTR(x)             (((x) & RS_attrMask))
-// return attributes defining the background, encoding doesn't matter
-// depends on RS_fgShift > RS_bgShift
-#define GET_BGATTR(x)                                      \
-  (ecb_unlikely ((x) & RS_RVid)                            \
-    ? (((x) & (RS_attrMask & ~RS_RVid))                    \
-      | (((x) & RS_fgMask) >> (RS_fgShift - RS_bgShift)))  \
-    : ((x) & (RS_attrMask | RS_bgMask)))
 #define SET_FGCOLOR(x,fg)       (((x) & ~RS_fgMask)   | ((fg) << RS_fgShift))
 #define SET_BGCOLOR(x,bg)       (((x) & ~RS_bgMask)   | ((bg) << RS_bgShift))
 #define SET_ATTR(x,a)           (((x) & ~RS_attrMask) | (a))
@@ -872,9 +857,7 @@ struct mbstate
 struct compose_char
 {
   unicode_t c1, c2; // any chars != NOCHAR are valid
-  #if __cplusplus >= 201103L || ECB_GCC_VERSION(4,4)
-  compose_char () = default;
-  #endif
+
   compose_char (unicode_t c1, unicode_t c2)
   : c1(c1), c2(c2)
   { }
@@ -1164,6 +1147,8 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
 # ifdef POINTER_BLANK
                   pointerBlankDelay,
 # endif
+                  multiClickTime,
+                  cursor_type,
                   allowedxerror;
 /* ---------- */
   unsigned int    ModLevel3Mask,
@@ -1242,6 +1227,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   char           *v_buffer;           /* pointer to physical buffer */
   unsigned int    v_buflen;           /* size of area to write */
   stringvec      *argv, *envv;        /* if != 0, will be freed at destroy time */
+  char           **env;
 
 #ifdef KEYSYM_RESOURCE
   keyboard_manager *keyboard;
@@ -1334,13 +1320,15 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   void pointer_unblank ();
 
   void tt_printf (const char *fmt,...);
+  void tt_write_ (const char *data, unsigned int len);
   void tt_write (const char *data, unsigned int len);
+  void tt_write_user_input (const char *data, unsigned int len);
   void pty_write ();
 
   void make_current () const // make this the "currently active" urxvt instance
   {
     SET_R (this);
-    set_environ (envv);
+    set_environ (env);
     rxvt_set_locale (locale);
   }
 
@@ -1383,7 +1371,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
 #else
   void set_urgency (bool enable) { }
 #endif
-  void update_fade_color (unsigned int idx);
+  void update_fade_color (unsigned int idx, bool first_time = false);
 #ifdef PRINTPIPE
   FILE *popen_printer ();
   int pclose_printer (FILE *stream);
@@ -1417,7 +1405,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   int run_child (const char *const *argv);
   void color_aliases (int idx);
   void create_windows (int argc, const char *const *argv);
-  void get_colours ();
+  void get_colors ();
   void get_ourmods ();
   void set_icon (const char *file);
   // main.C
@@ -1426,7 +1414,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   ~rxvt_term ();
   void destroy ();
   void emergency_cleanup ();
-  void recolour_cursor ();
+  void recolor_cursor ();
   void resize_all_windows (unsigned int newwidth, unsigned int newheight, int ignoreparent);
   void window_calc (unsigned int newwidth, unsigned int newheight);
   bool set_fonts ();
@@ -1502,7 +1490,7 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
 #endif
   void scr_touch (bool refresh) NOTHROW;
   void scr_expose (int x, int y, int width, int height, bool refresh) NOTHROW;
-  void scr_recolour (bool refresh = true) NOTHROW;
+  void scr_recolor (bool refresh = true) NOTHROW;
   void scr_remap_chars () NOTHROW;
   void scr_remap_chars (line_t &l) NOTHROW;
 
@@ -1568,9 +1556,11 @@ struct rxvt_term : zero_initialized, rxvt_vars, rxvt_screen
   // xdefaults.C
   void rxvt_usage (int type);
   const char **get_options (int argc, const char *const *argv);
-  int parse_keysym (const char *str, const char *arg);
+  int parse_keysym (const char *str, unsigned int &state);
+  int bind_action (const char *str, const char *arg);
   const char *x_resource (const char *name);
   void extract_resources ();
+  void enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, const char *));
   void extract_keysym_resources ();
 };
 

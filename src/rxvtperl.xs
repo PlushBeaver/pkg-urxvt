@@ -3,11 +3,11 @@
  *----------------------------------------------------------------------*
  *
  * All portions of code are copyright by their respective author/s.
- * Copyright (c) 2005-2008,2011 Marc Lehmann <schmorp@schmorp.de>
+ * Copyright (c) 2005-2014,2011 Marc Lehmann <schmorp@schmorp.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -495,6 +495,25 @@ rxvt_perl_interp::parse_resource (rxvt_term *term, const char *name, bool arg, b
 }
 
 static void
+_keysym_resource_push (rxvt_term *term, const char *k, const char *v)
+{
+  unsigned int state;
+
+  if (term->parse_keysym (k, state) == -1)
+    return;
+
+  dSP;
+  XPUSHs (sv_2mortal (newSVpv (v, 0)));
+  PUTBACK;
+}
+
+static void
+_keysym_resources (rxvt_term *term)
+{
+  term->enumerate_keysym_resources (_keysym_resource_push);
+}
+
+static void
 ungrab (rxvt_term *THIS)
 {
   if (THIS->perl.grabtime)
@@ -795,6 +814,10 @@ BOOT:
     IV iv;
   } *civ, const_iv[] = {
 #   define const_iv(name) { # name, (IV)name }
+    const_iv (HOOK_INIT),
+    const_iv (HOOK_DESTROY),
+    const_iv (HOOK_ACTION),
+
     const_iv (NUM_RESOURCES),
     const_iv (DEFAULT_RSTYLE),
     const_iv (OVERLAY_RSTYLE),
@@ -1006,17 +1029,17 @@ BOOT:
 }
 
 void
-log (const char *msg)
+log (utf8_string msg)
 	CODE:
         rxvt_log ("%s", msg);
 
 void
-warn (const char *msg)
+warn (utf8_string msg)
 	CODE:
         rxvt_warn ("%s", msg);
 
 void
-fatal (const char *msg)
+fatal (utf8_string msg)
 	CODE:
         rxvt_fatal ("%s", msg);
 
@@ -1191,6 +1214,13 @@ rxvt_term::put_option_db (octet_string specifier, octet_string value)
 	CODE:
         XrmPutStringResource (&THIS->option_db, specifier, value);
 
+void
+rxvt_term::_keysym_resources ()
+	PPCODE:
+        PUTBACK;
+        _keysym_resources (THIS);
+        SPAGAIN;
+
 int
 rxvt_term::grab_button (int button, U32 modifiers, Window window = THIS->vt)
 	CODE:
@@ -1259,7 +1289,7 @@ rxvt_term::ungrab ()
         ungrab (THIS);
 
 int
-rxvt_term::XStringToKeysym (char *string)
+rxvt_term::XStringToKeysym (octet_string string)
 	CODE:
         RETVAL = XStringToKeysym (string);
 	OUTPUT: RETVAL
@@ -1279,7 +1309,7 @@ rxvt_term::XKeysymToKeycode (int sym)
 int
 rxvt_term::XKeycodeToKeysym (int code, int index)
 	CODE:
-        RETVAL = XKeycodeToKeysym (THIS->dpy, code, index);
+        RETVAL = rxvt_XKeycodeToKeysym (THIS->dpy, code, index);
 	OUTPUT: RETVAL
 
 int
@@ -1698,6 +1728,7 @@ rxvt_term::special_encode (SV *string)
 
 	rxvt_pop_locale ();
 
+        free (wstr);
         RETVAL = wcs2sv (rstr, r - rstr);
 }
 	OUTPUT:
@@ -1731,13 +1762,14 @@ rxvt_term::special_decode (SV *text)
           else
             *r++ = *s;
 
+        free (wstr);
         RETVAL = wcs2sv (rstr, r - rstr);
 }
 	OUTPUT:
         RETVAL
 
 void
-rxvt_term::_resource (char *name, int index, SV *newval = 0)
+rxvt_term::_resource (octet_string name, int index, SV *newval = 0)
 	PPCODE:
 {
 	static const struct resval { const char *name; int value; } *rs, rslist [] = {
@@ -1785,7 +1817,7 @@ rxvt_term::_resource (char *name, int index, SV *newval = 0)
 }
 
 const char *
-rxvt_term::x_resource (const char *name)
+rxvt_term::x_resource (octet_string name)
 
 bool
 rxvt_term::option (U8 optval, int set = -1)
@@ -1814,6 +1846,7 @@ rxvt_term::option (U8 optval, int set = -1)
 #endif
 
                   case Opt_cursorUnderline:
+                    THIS->cursor_type = set ? 1 : 0;
                     THIS->want_refresh = 1;
                     THIS->refresh_check ();
                     break;
@@ -1829,9 +1862,11 @@ rxvt_term::option (U8 optval, int set = -1)
         RETVAL
 
 bool
-rxvt_term::parse_keysym (char *keysym, char *str)
+rxvt_term::bind_action (octet_string keysym, octet_string action)
+        ALIAS:
+           parse_keysym = 1
 	CODE:
-        RETVAL = 0 < THIS->parse_keysym (keysym, str);
+        RETVAL = 0 < THIS->bind_action (keysym, action);
         THIS->keyboard->register_done ();
 	OUTPUT:
         RETVAL
@@ -1840,7 +1875,7 @@ void
 rxvt_term::register_command (int keysym, unsigned int state, SV *str)
         CODE:
         wchar_t *wstr = sv2wcs (str);
-        THIS->keyboard->register_user_translation (keysym, state, wstr);
+        THIS->keyboard->register_action (keysym, state, wstr);
         free (wstr);
 
 void
@@ -1962,7 +1997,7 @@ void
 rxvt_term::scr_bell ()
 
 void
-rxvt_term::scr_recolour (bool refresh = true);
+rxvt_term::scr_recolor (bool refresh = true);
 
 void
 rxvt_term::scr_change_screen (int screen)
@@ -1975,6 +2010,14 @@ rxvt_term::scr_add_lines (SV *string)
         THIS->scr_add_lines (wstr, wcslen (wstr));
         free (wstr);
 }
+
+void
+rxvt_term::tt_write_user_input (SV *octets)
+        INIT:
+          STRLEN len;
+          char *str = SvPVbyte (octets, len);
+	C_ARGS:
+          str, len
 
 void
 rxvt_term::tt_write (SV *octets)

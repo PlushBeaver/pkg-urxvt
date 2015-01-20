@@ -42,11 +42,15 @@
 
 #ifdef __cplusplus
 # define EV_CPP(x) x
+# if __cplusplus >= 201103L
+#  define EV_THROW noexcept
+# else
+#  define EV_THROW throw ()
+# endif
 #else
 # define EV_CPP(x)
+# define EV_THROW
 #endif
-
-#define EV_THROW EV_CPP(throw())
 
 EV_CPP(extern "C" {)
 
@@ -205,7 +209,7 @@ struct ev_loop;
 /*****************************************************************************/
 
 #define EV_VERSION_MAJOR 4
-#define EV_VERSION_MINOR 15
+#define EV_VERSION_MINOR 19
 
 /* eventmask, revents, events... */
 enum {
@@ -660,8 +664,8 @@ EV_API_DECL void ev_set_userdata (EV_P_ void *data) EV_THROW;
 EV_API_DECL void *ev_userdata (EV_P) EV_THROW;
 typedef void (*ev_loop_callback)(EV_P);
 EV_API_DECL void ev_set_invoke_pending_cb (EV_P_ ev_loop_callback invoke_pending_cb) EV_THROW;
-typedef void (*ev_loop_callback_nothrow)(EV_P) EV_THROW;
-EV_API_DECL void ev_set_loop_release_cb (EV_P_ ev_loop_callback_nothrow release, ev_loop_callback_nothrow acquire) EV_THROW;
+/* C++ doesn't allow the use of the ev_loop_callback typedef here, so we need to spell it out*/
+EV_API_DECL void ev_set_loop_release_cb (EV_P_ void (*release)(EV_P) EV_THROW, void (*acquire)(EV_P) EV_THROW) EV_THROW;
 
 EV_API_DECL unsigned int ev_pending_count (EV_P) EV_THROW; /* number of pending events, if any */
 EV_API_DECL void ev_invoke_pending (EV_P); /* invoke all pending watchers */

@@ -1,6 +1,7 @@
 // all resource indices, used by rxvt.h and rxvtperl.xs
 
  def(loginShell)
+ def(multiClickTime)
  def(iconic)
  def(visualBell)
  def(mapAlert)
@@ -64,4 +65,5 @@
 #else
  nodef(buffered)
 #endif
+ def(dockapp)
 

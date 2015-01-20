@@ -22,9 +22,82 @@ I find (I first, I last, const T& value)
 
 #include <new>
 
-#if __cplusplus >= 201103L
+#if ECB_CPP11
   #include <type_traits>
 #endif
+
+namespace estl
+{
+#if ESTL_LARGE_MEMORY_MODEL
+  // should use size_t/ssize_t, but that's not portable enough for us
+  typedef unsigned long size_type;
+  typedef          long difference_type;
+#else
+  typedef uint32_t size_type;
+  typedef  int32_t difference_type;
+#endif
+
+  template<typename T>
+  struct scoped_ptr
+  {
+    T *p;
+
+    scoped_ptr ()     : p (0) { }
+
+    explicit
+    scoped_ptr (T *a) : p (a) { }
+
+    ~scoped_ptr ()
+    {
+      delete p;
+    }
+
+    void reset (T *a)
+    {
+      delete p;
+      p = a;
+    }
+
+    T *operator ->() const { return p; }
+    T &operator *() const { return *p; }
+
+    operator T *()  { return p; }
+    T *get () const { return p; }
+
+  private:
+    scoped_ptr (const scoped_ptr &);
+    scoped_ptr &operator =(const scoped_ptr &);
+  };
+
+  template<typename T>
+  struct scoped_array
+  {
+    T *p;
+
+    scoped_array ()     : p (0) { }
+
+    explicit
+    scoped_array (T *a) : p (a) { }
+
+    ~scoped_array ()
+    {
+      delete [] p;
+    }
+
+    void reset (T *a)
+    {
+      delete [] p;
+      p = a;
+    }
+
+    operator T *()  { return p; }
+    T *get () const { return p; }
+
+  private:
+    scoped_array (const scoped_array &);
+    scoped_array &operator =(const scoped_array &);
+  };
+}
 
 // original version taken from MICO, but this has been completely rewritten
 // known limitations w.r.t. std::vector
@@ -38,14 +111,7 @@ I find (I first, I last, const T& value)
 template<class T>
 struct simplevec
 {
-#if ESTL_BIG_VECTOR
-  // shoudl use size_t/ssize_t, but that's not portable enough for us
-  typedef unsigned long size_type;
-  typedef          long difference_type;
-#else
-  typedef uint32_t size_type;
-  typedef  int32_t difference_type;
-#endif
+  typedef estl::size_type size_type;
 
   typedef       T  value_type;
   typedef       T *iterator;
@@ -65,12 +131,12 @@ private:
   // "not simple enough" will use the slow path.
   static bool is_simple_enough ()
   {
-    #if __cplusplus >= 201103L
+    #if ECB_CPP11
       return std::is_trivially_assignable<T, T>::value
-          && std::is_trivially_constructable<T>::value
+          && std::is_trivially_constructible<T>::value
           && std::is_trivially_copyable<T>::value
           && std::is_trivially_destructible<T>::value;
-    #elif ECB_GCC_VERSION(4,4)
+    #elif ECB_GCC_VERSION(4,4) || ECB_CLANG_VERSION(2,8)
       return __has_trivial_assign (T)
           && __has_trivial_constructor (T)
           && __has_trivial_copy (T)
@@ -147,14 +213,14 @@ private:
 
     construct (buf + sze, n);
 
-    sze += n;
-
     iterator src = buf + pos;
     if (is_simple_enough ())
-      memmove (src + n, src, sizeof (T) * n);
+      memmove (src + n, src, sizeof (T) * (sze - pos));
     else
-      for (size_type i = n; i--; )
+      for (size_type i = sze - pos; i--; )
         cop_set (src + n + i, src + i);
+
+    sze += n;
   }
 
 public:
@@ -218,8 +284,7 @@ public:
       new (buf + n) T (t);
   }
 
-  template<class I>
-  simplevec (I first, I last)
+  simplevec (const_iterator first, const_iterator last)
   {
     sze = res = last - first;
     buf = alloc (sze);
@@ -269,15 +334,16 @@ public:
   const_reference at (size_type idx) const { return buf [idx]; }
         reference at (size_type idx)       { return buf [idx]; }
 
-  template<class I>
-  void assign (I first, I last)
+  void assign (const_iterator first, const_iterator last)
   {
-    swap (simplevec<T> (first, last));
+    simplevec<T> v (first, last);
+    swap (v);
   }
 
   void assign (size_type n, const T &t)
   {
-    swap (simplevec<T> (n, t));
+    simplevec<T> v (n, t);
+    swap (v);
   }
 
   simplevec<T> &operator= (const simplevec<T> &v)
@@ -296,8 +362,7 @@ public:
     return buf + at;
   }
 
-  template<class I>
-  iterator insert (iterator pos, I first, I last)
+  iterator insert (iterator pos, const_iterator first, const_iterator last)
   {
     size_type n  = last - first;
     size_type at = pos - begin ();
@@ -328,7 +393,7 @@ public:
     if (is_simple_enough ())
       memmove (first, last, sizeof (T) * c);
     else
-      copy<iterator> (first, last, c, cop_set);
+      copy (first, last, c, cop_set);
 
     sze -= n;
     destruct (buf + sze, n);

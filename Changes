@@ -33,11 +33,84 @@ TODO IMPL: recalc bg only when not fully covering (no alpha, repeat|extend etc..
 TODO IMPL: colour-change event with index
 TODO IMPL: recalc bg always on bg colour change
 
+TODO: document typical actions in rxvt.1.pod keysyms
+TODO: warn with a graphical message when env has been modified
+TODO: c&c perl socket via daemon-ext mechanism
+TODO: simplify extension metainfo cache, cache on disk
+TODO: URxvt::Ext::Name installs urxvt ext name and provides pod/manpage for URxvt::Ext::Name
+
+9.21 Wed Dec 31 14:50:03 CET 2014
+	- the "moa redraw 8-bit british vintage colour management" release.
+	- NOTICE: this release updates terminfo.
+	- fix pixel droppings on overdraw when a secondary core font has the
+          same height but different ascent.
+        - implement cvvis in terminfo as blinking cursor, to distinguish it
+          from cnorm (emacs uses cvvis which is commonly a blinking cursor).
+        - when xft support was compiled in, colour queries erroneously returned
+          premultiplied values, this also affected internal queries, for example
+          when calculating faded colour. alpha is now divided out when possible,
+          which is more correct but loses colour resolution.
+	- add DECSCUSR xterm extension to set the cursor to a vertical bar.
+	- add 'extension:string' action, and associated on_action perl
+	  hook, for keysym resources that invokes actions provided by
+	  perl extensions. The 'perl:string' action and
+	  on_user_command hook are deprecated but still supported.
+	- add 'builtin-string' action for keysym resources that restores string
+	  mappings for keys that have predefined actions in urxvt.
+	- add -k option to urxvtc for killing the daemon process.
+        - document urxvtd's -e/--eval option that was implemented in 9.16,
+          but not documented.
+	- add -dockapp option to make the wm treat urxvt as a dockapp.
+	- add -mc option and multiClickTime resource to set the maximum time
+	  between multi-click select events (patch by Joe Peterson).
+	- new 'eval' extension to evaluate arbitrary perl code with keysym
+	  bindings. The extension also provides methods that implement basic
+	  actions, such as pasting selections and scrolling.
+	- the macosx-clipboard and macosx-clipboard-native extensions have been removed.
+	- kuake extension now uses the kuake.hotkey resource to specify the hotkey.
+	- new 'matcher:select' mode of matcher to iterate over the matches with the keyboard.
+	- the 'matcher:list' feature of matcher now honours the launcher
+	  associated to a matched pattern.
+	- speed-up matcher underlining on very long lines (reported by Edward Z. Yang).
+	- fix up/down commands of searchable-scrollback so that they always move
+	  to the previous/next logical line with a match, if any.
+	- searchable-scrollback resource has been deprecated (use keysym instead).
+        - extension parameter passing is deprecated (use resource mechanism instead).
+        - upgrade to GPLv3 (see COPYING).
+	- compile out of the box on Solaris 10, again.
+        - fix height and position of the stippled area in next scrollbar (patch
+          by Thomas Otto).
+        - fix off-by-one bug causing the iso14755 window not to jump out of the
+          way properly.
+	- fix crash that may happen if a lib to which urxvt is linked to calls setenv.
+	- fix memory leak in special_{encode,decode} perl methods.
+	- fix refresh bug that occurs when reverse video is set on a cell
+	  containing a space and with the same bg and fg colour, red hat bug
+	  #830236.
+        - fix crash that may happen if an x error is received after a terminal
+          window/popup has been destroyed already.
+        - removed superfluous 0 digit from sgr terminfo sequence.
+        - greatly improve colour allocation on colour-starved pseudocolour
+          displays to avoid read-write cells instead of simply failing
+          (this is only relevant for antique 8bpp frame buffers).
+        - do not free fade colours when not doing fading (this is likely
+          only relevant for antique 8bpp frame buffers).
+	- do not specialcase 2 or 4 colour visuals, leading to
+          simpler and actually more correct code.
+        - hopefully no longer leak colours on !truecolour visuals.
+        - use consistent method names (scr_recolour => scr_recolor).
+        - use simpler (but slightly less bogus) formula for nearest
+          colour choice (this is likely only relevant for antique 8bpp
+          frame buffers).
+        - remove fallback behaviour when initialising colours - the
+          behaviour was inconsistent between startup vs. later and
+          was only effective when valid colours couldn't be allocated.
+
 9.20 Sat Apr 26 16:22:27 CEST 2014
         - (libptytty) fix bug that prevented urxvtd from writing utmp
           entries when using --fork (reported by Ryan Kavanagh).
         - security bugfix: window property values could be queried even
-          in secure mode (reported by Phillip Hallam-Baker).
+          in secure mode (reported by Conor McCarthy).
 	- fix build when perl is enabled and fading is disabled.
 	- fix regression that broke continuous scrolling when pressing
 	  and holding the scrollbar up or down button, gentoo bug #493992.
