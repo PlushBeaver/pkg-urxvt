@@ -1,3 +1,17 @@
+rxvt-unicode (9.21-1) unstable; urgency=medium
+
+  * Imported Upstream version 9.21
+  * Bump standards version to 3.9.6; no changes required
+  * Drop 06_debian_docs.diff; applied upstream
+  * Update copyright years
+  * Fix broken clean target in debian/rules; some changes were not being
+    cleaned up.
+  * Make builds reproducible: don't include timestamp in gzipped manpages
+  * Drop unused lintian override:
+    rxvt-unicode: manpage-has-errors-from-man usr/share/man/man7/urxvt.7.gz *
+
+ -- Ryan Kavanagh <rak@debian.org>  Sun, 08 Feb 2015 10:53:10 -0500
+
 rxvt-unicode (9.20-1) unstable; urgency=high
 
   * Imported Upstream version 9.20 (Closes: #746593)
