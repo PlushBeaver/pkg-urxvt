@@ -7,11 +7,11 @@ Origin: vendor
 Bug-Debian: http://bugs.debian.org/348697
 Reviewed-By: Ryan Kavanagh <ryanakca@kubuntu.org>
 Last-Update: 2011-02-24
-Index: pkg-urxvt/src/rxvttoolkit.C
+Index: rxvt-unicode/src/rxvttoolkit.C
 ===================================================================
---- pkg-urxvt.orig/src/rxvttoolkit.C	2013-02-12 12:15:07.827530666 -0500
-+++ pkg-urxvt/src/rxvttoolkit.C	2013-02-12 12:15:07.823530570 -0500
-@@ -346,13 +346,15 @@
+--- rxvt-unicode.orig/src/rxvttoolkit.C	2015-01-20 13:49:52.650045908 -0500
++++ rxvt-unicode/src/rxvttoolkit.C	2015-01-20 13:49:52.650045908 -0500
+@@ -348,13 +348,15 @@
    // 6. System wide per application default file.
  
    /* Add in $XAPPLRESDIR/Rxvt only; not bothering with XUSERFILESEARCHPATH */
