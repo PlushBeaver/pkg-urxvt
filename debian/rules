@@ -63,7 +63,7 @@ flagscommon = \
     CXXFLAGS="$(CXXFLAGS)" \
     LDFLAGS="$(LDFLAGS)"
 
-config.status: | $(BACKUP_FILES) configure
+config.status: | $(BACKED_UP_FILES) configure
 	dh_autotools-dev_updateconfig
 
 conf-unicode:
@@ -274,7 +274,7 @@ copyright:
 
 %.debian-backup:
 	@# Move the matching stem, foo, to foo.debian-backup.
-	mv -f $* $@
+	cp -f $* $@
 
 restore:
 	for file in $(BACKUP_FILES); do \
