@@ -36,6 +36,7 @@ BACKUP_FILES = \
     doc/rxvt.7.pod \
     doc/rxvt.1.man.in \
     doc/rxvtc.1.pod \
+    doc/rxvtc.1.man.in \
     src/Makefile.in \
     src/perl/selection-popup \
     src/perl/tabbed \
