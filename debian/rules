@@ -254,6 +254,7 @@ binary-arch: build install
 	    y=$(CURDIR)/debian/rxvt-$$x ;\
 	    chgrp utmp $$y/usr/bin/urxvt $$y/usr/bin/urxvtd;\
 	    chmod g+s $$y/usr/bin/urxvt $$y/usr/bin/urxvtd;\
+	    find $$y -name '*debian-backup*' -exec rm -f {} \; ; \
 	done
 #	dh_perl
 #	dh_python
