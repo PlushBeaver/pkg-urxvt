@@ -30,7 +30,7 @@ Breaks: rxvt-unicode-ml (<< 9.10-2)
 Depends: ${shlibs:Depends}, ${misc:Depends},
  base-passwd (>= 2.0.3.4),
  ncurses-base (>= 5.4-7)
-Recommends: ttf-dejavu,
+Recommends: fonts-dejavu,
  fonts-vlgothic | fonts-japanese-gothic
 Description: RXVT-like terminal emulator with Unicode support
  rxvt-unicode is a modern, Unicode-aware color xterm replacement that uses
@@ -58,7 +58,7 @@ Provides: x-terminal-emulator, rxvt-unicode
 Depends: ${shlibs:Depends}, ${misc:Depends},
  base-passwd (>= 2.0.3.4),
  ncurses-term (>= 5.8-1)
-Recommends: ttf-dejavu,
+Recommends: fonts-dejavu,
  fonts-vlgothic | fonts-japanese-gothic
 Conflicts: rxvt-unicode
 Description: multi-lingual terminal emulator with Unicode support for X11

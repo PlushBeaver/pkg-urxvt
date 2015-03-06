@@ -1,6 +1,6 @@
 Description: Use DejaVu instead of Bitstream Vera
- ttf-bitstream-vera was removed from the archive in favor of ttf-dejavu. Update
- rxvt-unicode accordingly.
+ ttf-bitstream-vera was removed from the archive in favor of fonts-dejavu.
+ Update rxvt-unicode accordingly.
  .
  Not forwarding upstream since this is an esthetic change.
 Author: Decklin Foster <decklin@red-bean.com>

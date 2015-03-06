@@ -142,6 +142,6 @@ Known Problems
    Cyrillic support but no bold chars. "xft:Courier New" has both,
    Cyrillic and bold chars but its look is a matter of taste.
    For Latin environment, DejaVu Sans Mono looks good (package:
-   ttf-dejavu). Mixtures are possible, e.g. "xft:DejaVu Sans
+   fonts-dejavu). Mixtures are possible, e.g. "xft:DejaVu Sans
    Mono:pixelsize=12,xft:Lucida Console:pixelsize=12" but they do not
    always look good together.
