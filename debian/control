@@ -3,7 +3,7 @@ Section: x11
 Priority: optional
 Maintainer: Ryan Kavanagh <rak@debian.org>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 7.0.0),
+Build-Depends: debhelper (>= 9.0.0),
  libxt-dev,
  libxrender-dev,
  libx11-dev,
