@@ -1,3 +1,18 @@
+rxvt-unicode (9.22-1) unstable; urgency=medium
+
+  * Imported Upstream version 9.22
+  * Switch from ttf-dejavu to fonts-dejavu (Closes: #779509)
+  * Drop menu files
+  * Update copyright years
+  * Bump compat to 9 and debhelper to >= 9.0.0
+  * Bump standards-version to 3.9.8
+  * Update Vcs-* URLs
+  * Lintian shouldn't complain about people's names, overriding
+    spelling-error-in-copyright
+  * Enable build flags from hardening=+all
+
+ -- Ryan Kavanagh <rak@debian.org>  Fri, 10 Jun 2016 15:52:43 -0400
+
 rxvt-unicode (9.21-1) unstable; urgency=medium
 
   * Imported Upstream version 9.21
