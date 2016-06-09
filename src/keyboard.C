@@ -5,6 +5,7 @@
  * All portions of code are copyright by their respective author/s.
  * Copyright (c) 2005      WU Fengguang
  * Copyright (c) 2005-2006 Marc Lehmann <schmorp@schmorp.de>
+ * Copyright (c) 2015      Emanuele Giaquinta <e.giaquinta@glauco.it>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,6 +92,24 @@ keyboard_manager::~keyboard_manager ()
 }
 
 void
+keyboard_manager::unregister_action (KeySym keysym, unsigned int state)
+{
+  for (unsigned int i = 0; i < keymap.size (); ++i)
+    if (keymap [i]->keysym == keysym
+        && keymap [i]->state == state)
+      {
+        free (keymap [i]->str);
+        delete keymap [i];
+
+        if (i < keymap.size () - 1)
+          keymap [i] = keymap [keymap.size () - 1];
+        keymap.pop_back ();
+
+        break;
+      }
+}
+
+void
 keyboard_manager::register_action (KeySym keysym, unsigned int state, const wchar_t *ws)
 {
   char *action = rxvt_wcstoutf8 (ws);
@@ -107,6 +126,8 @@ keyboard_manager::register_action (KeySym keysym, unsigned int state, const wcha
   else if (strncmp (action, "builtin-string:", 15) == 0)
     key->type = keysym_t::BUILTIN_STRING;
 
+  unregister_action (keysym, state);
+
   if (keymap.size () == keymap.capacity ())
     keymap.reserve (keymap.size () * 2);
 
@@ -114,8 +135,8 @@ keyboard_manager::register_action (KeySym keysym, unsigned int state, const wcha
   hash[0] = 3;
 }
 
-bool
-keyboard_manager::dispatch (rxvt_term *term, KeySym keysym, unsigned int state, const char *kbuf, int len)
+keysym_t *
+keyboard_manager::lookup_keysym (rxvt_term *term, KeySym keysym, unsigned int state)
 {
   assert (("register_done() need to be called", hash[0] == 0));
 
@@ -130,10 +151,16 @@ keyboard_manager::dispatch (rxvt_term *term, KeySym keysym, unsigned int state, 
 
   int index = find_keysym (keysym, state);
 
-  if (index >= 0)
-    {
-      keysym_t *key = keymap [index];
+  return index >= 0 ? keymap [index] : 0;
+}
 
+bool
+keyboard_manager::dispatch (rxvt_term *term, KeySym keysym, unsigned int state, const char *kbuf, int len)
+{
+  keysym_t *key = lookup_keysym (term, keysym, state);
+
+  if (key)
+    {
       if (key->type == keysym_t::BUILTIN_STRING)
         {
           term->tt_write_user_input (kbuf, len);

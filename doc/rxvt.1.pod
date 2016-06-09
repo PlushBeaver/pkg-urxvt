@@ -382,6 +382,9 @@ Capture system console messages.
 Compile I<XIM>: input style for input method; B<OverTheSpot>,
 B<OffTheSpot>, B<Root>; resource B<preeditType>.
 
+If the perl extension C<xim-onthespot> is used (which is the default),
+then additionally the C<OnTheSpot> preedit type is available.
+
 =item B<-im> I<text>
 
 Compile I<XIM>: input method name. resource B<inputMethod>.
@@ -870,8 +873,7 @@ bottom when a non-special key is pressed; option B<+sk>.
 
 =item B<saveLines:> I<number>
 
-Save I<number> lines in the scrollback buffer [default 64]. This
-resource is limited on most machines to 65535; option B<-sl>.
+Save I<number> lines in the scrollback buffer [default 1000]; option B<-sl>.
 
 =item B<internalBorder:> I<number>
 
@@ -944,6 +946,12 @@ Mouse pointer foreground colour.
 
 Mouse pointer background colour.
 
+=item B<pointerShape:> I<string>
+
+Compile I<frills>: Specifies the name of the mouse pointer shape
+[default B<xterm>]. See the macros in the B<X11/cursorfont.h> include
+file for possible values (omit the C<XC_> prefix).
+
 =item B<pointerBlankDelay:> I<number>
 
 Specifies number of seconds before blanking the pointer [default 2]. Use a
@@ -979,7 +987,7 @@ B<< BACKSLASH `"'&()*,;<=>?@[]^{|} >>
 
 =item B<preeditType:> I<style>
 
-B<OverTheSpot>, B<OffTheSpot>, B<Root>; option B<-pt>.
+B<OnTheSpot>, B<OverTheSpot>, B<OffTheSpot>, B<Root>; option B<-pt>.
 
 =item B<inputMethod:> I<name>
 

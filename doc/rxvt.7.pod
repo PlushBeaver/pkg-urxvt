@@ -541,9 +541,12 @@ this B<perl-ext-common> resource:
 This will keep the default extensions, but disable the two popup
 extensions. Some extensions can also be configured, for example,
 scrollback search mode is triggered by B<M-s>. You can move it to any
-other combination either by setting the B<searchable-scrollback> resource:
+other combination by adding a B<keysym> resource that binds the desired
+combination to the C<start> action of C<searchable-scrollback> and another
+one that binds B<M-s> to the C<builtin:> action:
 
-   URxvt.searchable-scrollback: CM-s
+   URxvt.keysym.CM-s: searchable-scrollback:start
+   URxvt.keysym.M-s: builtin:
 
 =head3 The cursor moves when selecting text in the current input line, how do I switch this off?
 
@@ -902,7 +905,7 @@ See next entry.
 
 One reason you might want this is that some distributions or operating
 systems still compile some programs using the long-obsoleted termcap
-library (Fedora Core's bash is one example) and rely on a termcap entry
+library (Fedora's bash is one example) and rely on a termcap entry
 for C<rxvt-unicode>.
 
 You could use rxvt's termcap entry with reasonable results in many cases.

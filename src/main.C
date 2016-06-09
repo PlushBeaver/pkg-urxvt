@@ -14,6 +14,7 @@
  * Copyright (c) 1998-2001 Geoff Wing <gcw@pobox.com>
  *                              - extensive modifications
  * Copyright (c) 2003-2014 Marc Lehmann <schmorp@schmorp.de>
+ * Copyright (c) 2015      Emanuele Giaquinta <e.giaquinta@glauco.it>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -283,7 +284,7 @@ rxvt_term::~rxvt_term ()
   if (env && memcmp (env, envv->begin (), envv->size () * sizeof (char *)))
     rxvt_warn ("env has been modified, probably as a result of a lib calling setenv.\n");
 
-  delete env;
+  delete [] env;
 
   delete envv;
   delete argv;

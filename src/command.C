@@ -28,7 +28,7 @@
  *				- Ctrl/Mod4+Tab works like Meta+Tab (options)
  * Copyright (c) 2003      Rob McMullen <robm@flipturn.org>
  * Copyright (c) 2003-2014 Marc Lehmann <schmorp@schmorp.de>
- * Copyright (c) 2007      Emanuele Giaquinta <e.giaquinta@glauco.it>
+ * Copyright (c) 2007,2015 Emanuele Giaquinta <e.giaquinta@glauco.it>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1036,6 +1036,9 @@ rxvt_term::flush_cb (ev::timer &w, int revents)
 void
 rxvt_term::cursor_blink_reset ()
 {
+  if (!focus)
+    return;
+
   if (hidden_cursor)
     {
       hidden_cursor = 0;
@@ -1611,8 +1614,9 @@ rxvt_term::x_cb (XEvent &ev)
         if (hidden_pointer)
           pointer_unblank ();
 #endif
-        if ((priv_modes & PrivMode_MouseBtnEvent && ev.xbutton.state & (Button1Mask|Button2Mask|Button3Mask))
-            || priv_modes & PrivMode_MouseAnyEvent)
+        if (!bypass_keystate
+            && ((priv_modes & PrivMode_MouseBtnEvent && ev.xbutton.state & (Button1Mask|Button2Mask|Button3Mask))
+                || priv_modes & PrivMode_MouseAnyEvent))
           mouse_report (ev.xbutton);
         if ((priv_modes & PrivMode_mouse_report) && !bypass_keystate)
           break;
@@ -1634,9 +1638,9 @@ rxvt_term::x_cb (XEvent &ev)
                                &ev.xbutton.state);
 #ifdef MOUSE_THRESHOLD
                 /* deal with a `jumpy' mouse */
-                if ((ev.xmotion.time - MEvent.time) > MOUSE_THRESHOLD)
-                  {
+                if (ev.xmotion.time - MEvent.time > MOUSE_THRESHOLD)
 #endif
+                  {
 #if ISO_14755
                     // 5.4
                     if (iso14755buf & (ISO_14755_STARTED | ISO_14755_54))
@@ -1695,9 +1699,7 @@ rxvt_term::x_cb (XEvent &ev)
                         sel_scroll_ev.stop();
                       }
 #endif
-#ifdef MOUSE_THRESHOLD
                   }
-#endif
               }
           }
         else if (scrollBar.state == SB_STATE_MOTION && ev.xany.window == scrollBar.win)
@@ -3338,7 +3340,7 @@ rxvt_term::process_color_seq (int report, int color, const char *str, char resp)
 
 #if XFT
       if (c.a != rgba::MAX_CC)
-        tt_printf ("\033]%d;rgba:%04x/%04x/%04x/%04x%c", report, c.a, c.r, c.g, c.b, resp);
+        tt_printf ("\033]%d;rgba:%04x/%04x/%04x/%04x%c", report, c.r, c.g, c.b, c.a, resp);
       else
 #endif
         tt_printf ("\033]%d;rgb:%04x/%04x/%04x%c", report, c.r, c.g, c.b, resp);
