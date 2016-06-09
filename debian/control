@@ -19,8 +19,8 @@ Build-Depends: debhelper (>= 9.0.0),
  libgtk2.0-dev
 Standards-Version: 3.9.8
 Homepage: http://software.schmorp.de/pkg/rxvt-unicode.html
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-urxvt/pkg-urxvt.git
-Vcs-Git: git://anonscm.debian.org/pkg-urxvt/pkg-urxvt.git
+Vcs-Browser: https://anonscm.debian.org/git/pkg-urxvt/pkg-urxvt.git
+Vcs-Git: https://anonscm.debian.org/git/pkg-urxvt/pkg-urxvt.git
 
 Package: rxvt-unicode
 Architecture: any
