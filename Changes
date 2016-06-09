@@ -24,7 +24,6 @@ TODO: xdbe
 TODO: optimise bg reeval for resize for common patterns (pixmap bigger than window?)
 TODO: pack rxvt_fatal messages into the exception object
 TODO: load must not cache, but global image cache must be cleaned
-TODO: provide something like % for easy access for parse_keysym
 TODO: description into --help output?
 TODO: rxvt -help => (see rxvt-XXX(1))?
 TODO: xor_rect should shift right
@@ -38,6 +37,45 @@ TODO: warn with a graphical message when env has been modified
 TODO: c&c perl socket via daemon-ext mechanism
 TODO: simplify extension metainfo cache, cache on disk
 TODO: URxvt::Ext::Name installs urxvt ext name and provides pod/manpage for URxvt::Ext::Name
+
+9.22 Sat Jan 23 21:07:33 CET 2016
+	- NOTICE: this release updates terminfo.
+	- add terminfo capabilities for various ctrl and shift-ctrl key variants
+	  (patch by Sebastian Schmidt).
+        - fix longstanding core font encoding bug where some character
+          ranges could not be mapped from unicode to the font: affected
+          encodings are big5, gb2312, iso8859-8 (hebrew), jis0201 and
+          ksc5601 (reported by Mikachu).
+        - fix crash when the number of columns is 1 and a 0 width character is inserted
+          (reported by Kuang-che Wu).
+        - fix a crash when parsing an invalid color specification (reported by Kuang-che Wu).
+        - fix a buffer overflow in font name parser (reported by Kuang-che Wu).
+	- do not start blinking cursor if the window is unfocused (reported by
+	  Devin J. Pohly).
+	- change the width of underline and i-beam cursor to 2 pixels (based on
+	  a patch by Omar Sandoval).
+	- add pointerShape resource to change the mouse pointer shape
+	  (based on a patch by Brian Watson).
+	- a keysym resource for a key which is already bound to an
+	  action now properly rebinds the key.
+	- do not report mouse motion events if Shift is active (patch by Daniel Hahler).
+	- put the alpha component last in responses to OSC color queries
+	  (patch by Benjamin Herr).
+	- the key_press hook is now invoked before processing the
+	  event, as documented. This change was done in 9.21 but not
+	  announced and fixes debian bugs #511377, #531751 and red hat
+	  bug #1105069. Note that this change breaks a few scripts,
+	  such as mark-yank-urls, which rely on the previous buggy
+	  behaviour that urxvt processes the event (in particular
+	  keysym bindings) before invoking the hook.
+	- the tabbed extension now properly refreshes the active tab
+	  on a key press when the mouse pointer is outside the terminal
+	  window.
+	- add 'lookup_keysym' perl method to lookup the action bound
+	  to a key combination.
+	- a key combination bound to 'matcher:select' can now be used
+	  to cycle through the matches in matcher.
+        - change perl integer accessors (->width et al.) into mutators.
 
 9.21 Wed Dec 31 14:50:03 CET 2014
 	- the "moa redraw 8-bit british vintage colour management" release.

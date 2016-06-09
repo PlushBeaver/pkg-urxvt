@@ -3,7 +3,7 @@
  *----------------------------------------------------------------------*
  *
  * All portions of code are copyright by their respective author/s.
- * Copyright (c) 2005-2014,2011 Marc Lehmann <schmorp@schmorp.de>
+ * Copyright (c) 2005-2014 Marc Lehmann <schmorp@schmorp.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1389,7 +1389,7 @@ rxvt_term::locale_decode (SV *octets)
 #define TERM_OFFSET_top_row     TERM_OFFSET(top_row)
 
 int
-rxvt_term::width ()
+rxvt_term::width (int new_value = NO_INIT)
 	ALIAS:
            width       = TERM_OFFSET_width
            height      = TERM_OFFSET_height
@@ -1409,6 +1409,8 @@ rxvt_term::width ()
            top_row     = TERM_OFFSET_top_row
 	CODE:
         RETVAL = *(int *)((char *)THIS + ix);
+        if (items > 1)
+          *(int *)((char *)THIS + ix) = new_value;
         OUTPUT:
         RETVAL
 
@@ -1574,6 +1576,9 @@ rxvt_term::want_refresh ()
 	CODE:
         THIS->want_refresh = 1;
 	THIS->refresh_check ();
+
+void
+rxvt_term::refresh_check ()
 
 void
 rxvt_term::ROW_t (int row_number, SV *new_text = 0, int start_col = 0, int start_ofs = 0, int max_len = MAX_COLS)
@@ -1857,6 +1862,16 @@ rxvt_term::option (U8 optval, int set = -1)
 #                    break;
                 }
           }
+}
+        OUTPUT:
+        RETVAL
+
+SV *
+rxvt_term::lookup_keysym (int keysym, unsigned int state)
+        CODE:
+{
+        keysym_t *key = THIS->keyboard->lookup_keysym (THIS, keysym, state);
+        RETVAL = key ? sv_2mortal (newSVpv (key->str, 0)) : &PL_sv_undef;
 }
         OUTPUT:
         RETVAL

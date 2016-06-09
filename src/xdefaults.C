@@ -7,7 +7,7 @@
  *				- original version
  * Copyright (c) 1997,1998 mj olesen <olesen@me.queensu.ca>
  * Copyright (c) 2003-2006 Marc Lehmann <schmorp@schmorp.de>
- * Copyright (c) 2007      Emanuele Giaquinta <e.giaquinta@glauco.it>
+ * Copyright (c) 2007,2015 Emanuele Giaquinta <e.giaquinta@glauco.it>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -202,6 +202,9 @@ optList[] = {
 #endif
 #if ENABLE_EWMH
               STRG (Rs_iconfile, "iconFile", "icon", "file", "path to application icon image"),
+#endif
+#ifdef HAVE_XMU
+              RSTRG (Rs_pointerShape, "pointerShape", "string"),
 #endif
               /* fonts: command-line option = resource name */
               STRG (Rs_font, "font", "fn", "fontname", "normal text font"),
@@ -627,10 +630,9 @@ rxvt_term::get_options (int argc, const char *const *argv)
 
 /*}}} */
 
-#ifndef NO_RESOURCES
 /*----------------------------------------------------------------------*/
 
-# ifdef KEYSYM_RESOURCE
+#ifdef KEYSYM_RESOURCE
 static void
 rxvt_define_key (rxvt_term *term, const char *k, const char *v)
 {
@@ -777,8 +779,7 @@ rxvt_term::bind_action (const char *str, const char *arg)
   return 1;
 }
 
-# endif /* KEYSYM_RESOURCE */
-#endif /* NO_RESOURCES */
+#endif /* KEYSYM_RESOURCE */
 
 static char *
 get_res (XrmDatabase database, const char *program, const char *option)
@@ -862,11 +863,10 @@ rxvt_term::extract_resources ()
 void
 rxvt_term::enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, const char *))
 {
-#ifndef NO_RESOURCES
   /*
    * [R5 or later]: enumerate the resource database
    */
-#  ifdef KEYSYM_RESOURCE
+#ifdef KEYSYM_RESOURCE
   void *closure[2] = {
     (void *)this,
     (void *)cb,
@@ -876,30 +876,34 @@ rxvt_term::enumerate_keysym_resources (void (*cb)(rxvt_term *, const char *, con
   XrmName name_prefix[3];
   XrmClass class_prefix[3];
 
-  name_prefix[0] = XrmStringToName (rs[Rs_name]);
   name_prefix[1] = XrmStringToName ("keysym");
   name_prefix[2] = NULLQUARK;
-  class_prefix[0] = XrmStringToName (RESCLASS);
   class_prefix[1] = XrmStringToName ("Keysym");
   class_prefix[2] = NULLQUARK;
-  /* XXX: Need to check sizeof (rxvt_t) == sizeof (XPointer) */
-  XrmEnumerateDatabase (database, name_prefix, class_prefix,
-                        XrmEnumOneLevel, rxvt_keysym_enumerate_helper, (XPointer)closure);
-#   ifdef RESFALLBACK
+
+# ifdef RESFALLBACK
   name_prefix[0] = class_prefix[0] = XrmStringToName (RESFALLBACK);
   /* XXX: Need to check sizeof (rxvt_t) == sizeof (XPointer) */
   XrmEnumerateDatabase (database, name_prefix, class_prefix,
                         XrmEnumOneLevel, rxvt_keysym_enumerate_helper, (XPointer)closure);
-#   endif
-#  endif
+# endif
 
-#endif /* NO_RESOURCES */
+  name_prefix[0] = class_prefix[0] = XrmStringToName (RESCLASS);
+  XrmEnumerateDatabase (database, name_prefix, class_prefix,
+                        XrmEnumOneLevel, rxvt_keysym_enumerate_helper, (XPointer)closure);
+
+  name_prefix[0] = class_prefix[0] = XrmStringToName (rs[Rs_name]);
+  XrmEnumerateDatabase (database, name_prefix, class_prefix,
+                        XrmEnumOneLevel, rxvt_keysym_enumerate_helper, (XPointer)closure);
+#endif
 }
 
 void
 rxvt_term::extract_keysym_resources ()
 {
+#ifdef KEYSYM_RESOURCE
   enumerate_keysym_resources (rxvt_define_key);
+#endif
 }
 
 /*----------------------- end-of-file (C source) -----------------------*/

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 1997-2001 Geoff Wing <gcw@pobox.com>
  * Copyright (c) 2003-2007 Marc Lehmann <schmorp@schmorp.de>
+ * Copyright (c) 2015      Emanuele Giaquinta <e.giaquinta@glauco.it>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1013,8 +1014,8 @@ end_of_line:
                        && ROW(screen.cur.row - 1).is_longer ())
                 {
                   linep = &ROW(screen.cur.row - 1);
-                  tp = line->t + ncol - 1;
-                  rp = line->r + ncol - 1;
+                  tp = linep->t + ncol - 1;
+                  rp = linep->r + ncol - 1;
                 }
               else
                 continue;
@@ -2120,18 +2121,13 @@ rxvt_term::scr_refresh () NOTHROW
           ccol2 = Color_bg;
 #endif
 
-        if (focus && cursor_type != 2)
+        if (focus && cursor_type == 0)
           {
             rend_t rend = cur_rend;
 
-            if (cursor_type == 1)
-              rend ^= RS_Uline;
-            else
-              {
-                rend ^= RS_RVid;
-                rend = SET_FGCOLOR (rend, ccol1);
-                rend = SET_BGCOLOR (rend, ccol2);
-              }
+            rend ^= RS_RVid;
+            rend = SET_FGCOLOR (rend, ccol1);
+            rend = SET_BGCOLOR (rend, ccol2);
 
             scr_set_char_rend (ROW(screen.cur.row), cur_col, rend);
           }
@@ -2143,9 +2139,9 @@ rxvt_term::scr_refresh () NOTHROW
 
     // save the current cursor coordinates if the cursor is visible
     // and either the window is unfocused or the cursor style is
-    // vertical bar, so as to clear the outline cursor in the next
-    // refresh if the cursor moves or becomes invisible
-    if (showcursor && (!focus || cursor_type == 2) && screen.cur.row - view_start < nrow)
+    // underline or vertical bar, so as to clear the outline cursor in
+    // the next refresh if the cursor moves or becomes invisible
+    if (showcursor && (!focus || cursor_type != 0) && screen.cur.row - view_start < nrow)
       {
         oldcursor.row = screen.cur.row - view_start;
         oldcursor.col = screen.cur.col;
@@ -2449,16 +2445,23 @@ rxvt_term::scr_refresh () NOTHROW
     {
       if (focus)
         {
-          if (cursor_type != 2)
+          if (cursor_type == 0)
             scr_set_char_rend (ROW(screen.cur.row), cur_col, cur_rend);
           else if (oldcursor.row >= 0)
             {
               XSetForeground (dpy, gc, pix_colors[ccol1]);
-              XFillRectangle (dpy, vt, gc,
-                              Col2Pixel (cur_col),
-                              Row2Pixel (oldcursor.row),
-                              1,
-                              Height2Pixel (1));
+              if (cursor_type == 1)
+                XFillRectangle (dpy, vt, gc,
+                                Col2Pixel (cur_col),
+                                Row2Pixel (oldcursor.row + 1) - 2,
+                                Width2Pixel (1),
+                                2);
+              else
+                XFillRectangle (dpy, vt, gc,
+                                Col2Pixel (cur_col),
+                                Row2Pixel (oldcursor.row),
+                                2,
+                                Height2Pixel (1));
             }
         }
       else if (oldcursor.row >= 0)

@@ -47,7 +47,6 @@ typedef  int32_t tlen_t_; // specifically for use in the line_t structure
 
 #if defined (ISO_14755) || defined (ENABLE_PERL)
 # define ENABLE_OVERLAY 1
-# undef NO_RESOURCES
 #endif
 
 #if ENABLE_PERL
@@ -161,11 +160,17 @@ const char *     rxvt_basename                    (const char *str) NOTHROW;
 void             rxvt_vlog                        (const char *fmt, va_list arg_ptr) NOTHROW;
 void             rxvt_log                         (const char *fmt,...) NOTHROW;
 void             rxvt_warn                        (const char *fmt,...) NOTHROW;
-void             rxvt_fatal                       (const char *fmt, ...) THROW ((class rxvt_failure_exception)) ecb_noreturn ecb_cold;
-void             rxvt_exit_failure                () THROW ((class rxvt_failure_exception)) ecb_noreturn ecb_cold;
+ecb_noreturn ecb_cold
+void             rxvt_fatal                       (const char *fmt, ...) THROW ((class rxvt_failure_exception));
+ecb_noreturn ecb_cold
+void             rxvt_exit_failure                () THROW ((class rxvt_failure_exception));
 
-char           * rxvt_strtrim                     (char *str) NOTHROW;
-char          ** rxvt_strsplit                    (char delim, const char *str) NOTHROW;
+void *           rxvt_malloc                      (size_t size);
+void *           rxvt_calloc                      (size_t number, size_t size);
+void *           rxvt_realloc                     (void *ptr, size_t size);
+
+char *           rxvt_strtrim                     (char *str) NOTHROW;
+char **          rxvt_strsplit                    (char delim, const char *str) NOTHROW;
 
 static inline void
 rxvt_free_strsplit (char **ptr) NOTHROW
@@ -173,10 +178,6 @@ rxvt_free_strsplit (char **ptr) NOTHROW
   free (ptr[0]);
   free (ptr);
 }
-
-void           * rxvt_malloc                      (size_t size);
-void           * rxvt_calloc                      (size_t number, size_t size);
-void           * rxvt_realloc                     (void *ptr, size_t size);
 
 KeySym rxvt_XKeycodeToKeysym (Display *dpy, KeyCode keycode, int index);
 
