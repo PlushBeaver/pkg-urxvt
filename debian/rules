@@ -11,6 +11,8 @@
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
 CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS) -Wall
 CFLAGS   := $(shell dpkg-buildflags --get CFLAGS) -Wall
 CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS) -Wall
