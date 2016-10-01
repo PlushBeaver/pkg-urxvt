@@ -1,3 +1,9 @@
+rxvt-unicode (9.22-2) unstable; urgency=medium
+
+  * Add patch for mouse wheel scrolling from Arch AUR.
+
+ -- Dmitry Kozliuk <Dmitry.Kozliuk@gmail.com>  Sat, 1 Oct 2016 20:05:20 +0400
+
 rxvt-unicode (9.22-1) unstable; urgency=medium
 
   * Imported Upstream version 9.22

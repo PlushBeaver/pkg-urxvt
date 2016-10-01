@@ -27,6 +27,9 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
+# Simplify building just the required package if desired.
+subpackages=unicode unicode-256color unicode-lite
+
 # Backup files that get overwriten so that the clean target can restore
 # them.
 BACKUP_FILES = \
@@ -131,7 +134,7 @@ build-stamp: config.status
 	dh_installdirs -A usr/bin etc/X11/app-defaults usr/share/pixmaps /usr/share/applications
 
 	set -e; \
-	for x in unicode unicode-256color unicode-lite; do \
+	for x in $(subpackages); do \
 		cp -f debian/rxvt-unicode-base.preinst debian/rxvt-$$x.preinst; \
 		cp -f debian/rxvt-unicode-base.postinst debian/rxvt-$$x.postinst; \
 		cp -f debian/rxvt-unicode-base.prerm debian/rxvt-$$x.prerm; \
@@ -181,7 +184,7 @@ clean: restore
 
 	# Remove various extra files we create during build
 	set -e; \
-	for x in unicode unicode-256color unicode-lite; do \
+	for x in $(subpackages); do \
 	    rm -f debian/rxvt-$$x.preinst; \
 	    rm -f debian/rxvt-$$x.postinst; \
 	    rm -f debian/rxvt-$$x.prerm; \
@@ -252,7 +255,7 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	for x in unicode unicode-256color unicode-lite; do \
+	for x in $(subpackages); do \
 	    y=$(CURDIR)/debian/rxvt-$$x ;\
 	    chgrp utmp $$y/usr/bin/urxvt $$y/usr/bin/urxvtd;\
 	    chmod g+s $$y/usr/bin/urxvt $$y/usr/bin/urxvtd;\
